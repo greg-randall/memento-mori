@@ -603,16 +603,24 @@
                             
                             // Use the local URI path instead of the backup_uri
                             profilePicUrl = profilePhotoData.uri;
-                            
+                        
                             // Create an image element for the profile picture
                             const profileImg = document.createElement('img');
-                            profileImg.src = profilePicUrl;
                             profileImg.alt = 'Profile Picture';
                             profileImg.style.width = '100%';
                             profileImg.style.height = '100%';
                             profileImg.style.objectFit = 'cover';
                             profileImg.style.borderRadius = '50%';
-                            
+                        
+                            // Set a placeholder initially
+                            profileImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">👤</text></svg>';
+                        
+                            // Try to load the profile picture with multiple fallback paths
+                            tryLoadImage(profileImg, profilePicUrl, function() {
+                                // If all attempts fail, keep the placeholder
+                                console.log("Using placeholder for profile picture");
+                            });
+                        
                             // Clear the profile picture div and add the image
                             profilePicture.innerHTML = '';
                             profilePicture.appendChild(profileImg);
@@ -759,21 +767,45 @@
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         image.alt = 'Instagram post';
                         
-                        // Try to load the actual image
-                        fetch(imagePath)
-                            .then(response => {
-                                if (response.ok) {
-                                    image.src = imagePath;
-                                } else {
-                                    console.warn(`Failed to load image: ${imagePath}`);
-                                    // Keep the placeholder but update text
+                        console.log(`Trying to load grid image: ${imagePath}`);
+                        
+                        // Create a new Image object to test loading
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            console.log(`Successfully loaded grid image: ${imagePath}`);
+                            image.src = imagePath;
+                        };
+                        
+                        testImg.onerror = function() {
+                            console.warn(`Failed to load grid image: ${imagePath}`);
+                            // Try a fallback path if the original path doesn't work
+                            if (uri && !uri.startsWith('http')) {
+                                // Try different path formats
+                                const parts = uri.split('/');
+                                const fileName = parts[parts.length - 1];
+                                
+                                // Try just the filename
+                                const fallbackPath = fileName;
+                                console.log(`Trying fallback path for grid: ${fallbackPath}`);
+                                
+                                const fallbackImg = new Image();
+                                fallbackImg.onload = function() {
+                                    console.log(`Successfully loaded fallback grid image: ${fallbackPath}`);
+                                    image.src = fallbackPath;
+                                };
+                                
+                                fallbackImg.onerror = function() {
+                                    console.error(`All grid image loading attempts failed for: ${uri}`);
                                     image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                                }
-                            })
-                            .catch(error => {
-                                console.error(`Error loading image: ${imagePath}`, error);
+                                };
+                                
+                                fallbackImg.src = fallbackPath;
+                            } else {
                                 image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                            });
+                            }
+                        };
+                        
+                        testImg.src = imagePath;
                         
                         gridItem.appendChild(image);
                         
@@ -884,37 +916,51 @@
                     } else {
                         const image = document.createElement('img');
                         
-                        // Get the local path from the uri
+                        // Get the local path from the uri - preserve the full path structure
                         let imagePath = media.uri;
-                        if (media.uri && !media.uri.startsWith('http')) {
-                            const parts = media.uri.split('/');
-                            const fileName = parts[parts.length - 1];
-                            if (parts.length >= 3) {
-                                const folder = parts[parts.length - 2];
-                                imagePath = `media/${folder}/${fileName}`;
-                            } else {
-                                imagePath = fileName;
-                            }
-                        }
                         
                         // Set a placeholder initially
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         
-                        // Try to load the actual image
-                        fetch(imagePath)
-                            .then(response => {
-                                if (response.ok) {
-                                    image.src = imagePath;
-                                } else {
-                                    console.warn(`Failed to load image in modal: ${imagePath}`);
-                                    // Keep the placeholder but update text
+                        console.log(`Trying to load image: ${imagePath}`);
+                        
+                        // Create a new Image object to test loading
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            console.log(`Successfully loaded image: ${imagePath}`);
+                            image.src = imagePath;
+                        };
+                        
+                        testImg.onerror = function() {
+                            console.warn(`Failed to load image in modal: ${imagePath}`);
+                            // Try a fallback path if the original path doesn't work
+                            if (media.uri && !media.uri.startsWith('http')) {
+                                // Try different path formats
+                                const parts = media.uri.split('/');
+                                const fileName = parts[parts.length - 1];
+                                
+                                // Try just the filename
+                                const fallbackPath = fileName;
+                                console.log(`Trying fallback path: ${fallbackPath}`);
+                                
+                                const fallbackImg = new Image();
+                                fallbackImg.onload = function() {
+                                    console.log(`Successfully loaded fallback image: ${fallbackPath}`);
+                                    image.src = fallbackPath;
+                                };
+                                
+                                fallbackImg.onerror = function() {
+                                    console.error(`All image loading attempts failed for: ${media.uri}`);
                                     image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                                }
-                            })
-                            .catch(error => {
-                                console.error(`Error loading image in modal: ${imagePath}`, error);
+                                };
+                                
+                                fallbackImg.src = fallbackPath;
+                            } else {
                                 image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                            });
+                            }
+                        };
+                        
+                        testImg.src = imagePath;
                         
                         image.alt = 'Instagram post';
                         mediaSlide.appendChild(image);
@@ -1126,6 +1172,75 @@
                     console.error('Error decoding Unicode escapes:', e);
                     return str; // Return original string if there's an error
                 }
+            }
+            
+            // Helper function to try multiple possible paths for an image
+            function tryLoadImage(imageElement, originalPath, fallbackCallback) {
+                console.log(`Trying to load image from path: ${originalPath}`);
+                
+                // Create a new Image object to test loading
+                const testImg = new Image();
+                
+                testImg.onload = function() {
+                    console.log(`Successfully loaded image: ${originalPath}`);
+                    imageElement.src = originalPath;
+                };
+                
+                testImg.onerror = function() {
+                    console.warn(`Failed to load image: ${originalPath}`);
+                    
+                    // Try alternative paths
+                    const paths = [];
+                    
+                    // Try the original path
+                    paths.push(originalPath);
+                    
+                    // Try without 'media/' prefix if it exists
+                    if (originalPath.startsWith('media/')) {
+                        paths.push(originalPath.substring(6));
+                    }
+                    
+                    // Try just the filename
+                    const parts = originalPath.split('/');
+                    const fileName = parts[parts.length - 1];
+                    paths.push(fileName);
+                    
+                    // Try with different folder structure
+                    if (parts.length >= 3) {
+                        const folder = parts[parts.length - 2];
+                        paths.push(`${folder}/${fileName}`);
+                    }
+                    
+                    // Try loading each path
+                    tryNextPath(paths, 0, imageElement, fallbackCallback);
+                };
+                
+                testImg.src = originalPath;
+            }
+            
+            function tryNextPath(paths, index, imageElement, fallbackCallback) {
+                if (index >= paths.length) {
+                    console.error(`All image loading attempts failed`);
+                    if (fallbackCallback) fallbackCallback();
+                    return;
+                }
+                
+                const path = paths[index];
+                console.log(`Trying alternative path ${index + 1}/${paths.length}: ${path}`);
+                
+                const img = new Image();
+                
+                img.onload = function() {
+                    console.log(`Successfully loaded image from alternative path: ${path}`);
+                    imageElement.src = path;
+                };
+                
+                img.onerror = function() {
+                    console.warn(`Failed to load image from alternative path: ${path}`);
+                    tryNextPath(paths, index + 1, imageElement, fallbackCallback);
+                };
+                
+                img.src = path;
             }
         });
     </script>
