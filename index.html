@@ -659,7 +659,7 @@
                         // Set a placeholder image in case the file isn't found
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
                         image.dataset.src = imagePath;
-                        image.alt = post.title || 'Instagram post';
+                        image.alt = 'Instagram post';
                         
                         // Try to load the actual image
                         const testImg = new Image();
@@ -695,7 +695,7 @@
                 if (!post || !post.media || post.media.length === 0) return;
                 
                 // Update caption and date
-                postCaption.textContent = post.title || '';
+                postCaption.textContent = post.caption || post.title || '';
                 postDate.textContent = formatDateTime(new Date(post.creation_timestamp * 1000));
                 
                 // Update profile picture in modal if available
@@ -780,7 +780,7 @@
                         };
                         testImg.src = imagePath;
                         
-                        image.alt = media.title || post.title || 'Instagram post';
+                        image.alt = 'Instagram post';
                         mediaSlide.appendChild(image);
                     }
                     
