@@ -4,3 +4,4 @@
 *.gz
 *.tar.gz
 */*
+.aider*
