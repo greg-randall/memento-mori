@@ -916,6 +916,9 @@
                         const video = document.createElement('video');
                         video.controls = true;
                         video.preload = 'metadata'; // Only load metadata initially
+                        video.autoplay = true; // Autoplay when shown
+                        video.muted = true; // Must be muted for autoplay to work in most browsers
+                        video.playsInline = true; // Better mobile experience
                         
                         // Use the exact path from the uri
                         const videoPath = media.uri;
@@ -942,6 +945,19 @@
                         
                         video.src = videoPath;
                         mediaSlide.appendChild(video);
+                        
+                        // Add event listener to play video when slide becomes active
+                        const observer = new MutationObserver((mutations) => {
+                            mutations.forEach((mutation) => {
+                                if (mutation.type === 'attributes' && 
+                                    mutation.attributeName === 'class' &&
+                                    mediaSlide.classList.contains('active')) {
+                                    video.play().catch(e => console.log('Video autoplay failed:', e));
+                                }
+                            });
+                        });
+                        
+                        observer.observe(mediaSlide, { attributes: true });
                     } else {
                         const image = document.createElement('img');
                         
