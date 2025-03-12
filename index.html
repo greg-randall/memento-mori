@@ -705,16 +705,16 @@
                     throw new Error('Failed to load Instagram data. Make sure the file exists at your_instagram_activity/content/posts_1.json');
                 }
                 return postsResponse.json();
-                    .then(jsonData => {
-                        processInstagramData(jsonData);
-                    })
-                    .catch(error => {
-                        console.error('Error loading JSON:', error);
-                        alert('Error loading Instagram data: ' + error.message);
-                    })
-                    .finally(() => {
-                        loadingPosts.style.display = 'none';
-                    });
+            })
+            .then(jsonData => {
+                processInstagramData(jsonData);
+            })
+            .catch(error => {
+                console.error('Error loading JSON:', error);
+                alert('Error loading Instagram data: ' + error.message);
+            })
+            .finally(() => {
+                loadingPosts.style.display = 'none';
             });
             
             function processInstagramData(data) {
