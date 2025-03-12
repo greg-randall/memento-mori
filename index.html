@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Instagram Archive</title>
+    <style>
+        :root {
+            --instagram-bg: #fafafa;
+            --instagram-border: #dbdbdb;
+            --instagram-text: #262626;
+            --instagram-link: #0095f6;
+            --header-height: 60px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--instagram-bg);
+            color: var(--instagram-text);
+            line-height: 1.5;
+        }
+        
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background-color: white;
+            border-bottom: 1px solid var(--instagram-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 975px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--instagram-text);
+            text-decoration: none;
+        }
+        
+        main {
+            max-width: 975px;
+            margin: calc(var(--header-height) + 30px) auto 30px;
+            padding: 0 20px;
+        }
+        
+        .profile-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .profile-picture {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 30px;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #aaa;
+        }
+        
+        .profile-details h1 {
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 15px;
+        }
+        
+        .stats {
+            display: flex;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .stat {
+            margin-right: 40px;
+        }
+        
+        .stat-count {
+            font-weight: 600;
+        }
+        
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+        
+        .grid-item {
+            position: relative;
+            aspect-ratio: 1;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .grid-item img, .grid-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .grid-item:hover img, .grid-item:hover video {
+            transform: scale(1.05);
+        }
+        
+        .multi-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 2;
+        }
+        
+        .video-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 2;
+        }
+        
+        .post-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .post-modal-content {
+            display: flex;
+            max-width: 1200px;
+            margin: 30px auto;
+            background-color: white;
+            height: calc(100vh - 60px);
+            max-height: 800px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .post-media {
+            flex: 1;
+            background-color: black;
+            position: relative;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .post-media img, .post-media video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .post-info {
+            width: 340px;
+            border-left: 1px solid var(--instagram-border);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .post-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--instagram-border);
+            display: flex;
+            align-items: center;
+        }
+        
+        .post-user {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #eee;
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        .post-username {
+            font-weight: 600;
+        }
+        
+        .post-caption {
+            padding: 16px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .post-date {
+            padding: 16px;
+            color: #8e8e8e;
+            font-size: 12px;
+            border-top: 1px solid var(--instagram-border);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-prev {
+            left: 20px;
+        }
+        
+        .modal-next {
+            right: 20px;
+        }
+        
+        .slideshow-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 5;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slideshow-prev {
+            left: 10px;
+        }
+        
+        .slideshow-next {
+            right: 10px;
+        }
+        
+        .slideshow-indicator {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+        }
+        
+        .slideshow-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            margin: 0 3px;
+        }
+        
+        .slideshow-dot.active {
+            background-color: white;
+        }
+        
+        .media-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .media-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .media-slide.active {
+            opacity: 1;
+            z-index: 2;
+        }
+        
+        .file-input-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid var(--instagram-border);
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .posts-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 4px;
+            }
+            
+            .post-modal-content {
+                flex-direction: column;
+                height: auto;
+                max-height: none;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .post-media {
+                height: 50vh;
+            }
+            
+            .post-info {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--instagram-border);
+            }
+            
+            .profile-picture {
+                width: 80px;
+                height: 80px;
+                margin-right: 15px;
+            }
+            
+            .stat {
+                margin-right: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .posts-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 3px;
+            }
+            
+            .profile-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-picture {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="#" class="logo">Instagram Archive</a>
+        </div>
+    </header>
+    
+    <main>
+        <div class="file-input-container">
+            <h2>Select your Instagram data</h2>
+            <p>Please select the posts_1.json file from your Instagram data export folder:</p>
+            <br>
+            <input type="file" id="jsonFileInput" accept=".json">
+        </div>
+        
+        <div class="profile-info">
+            <div class="profile-picture">
+                <span>👤</span>
+            </div>
+            <div class="profile-details">
+                <h1 id="username">Your Instagram Archive</h1>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-count" id="post-count">0</span> posts
+                    </div>
+                </div>
+                <div id="date-range"></div>
+            </div>
+        </div>
+        
+        <div id="loadingPosts" class="loading" style="display: none;">
+            Loading posts...
+        </div>
+        
+        <div class="posts-grid" id="postsGrid"></div>
+    </main>
+    
+    <div class="post-modal" id="postModal">
+        <div class="close-modal" id="closeModal">✕</div>
+        <div class="modal-nav modal-prev" id="modalPrev">❮</div>
+        <div class="modal-nav modal-next" id="modalNext">❯</div>
+        <div class="post-modal-content">
+            <div class="post-media" id="postMedia">
+                <!-- Media content will be added here -->
+            </div>
+            <div class="post-info">
+                <div class="post-header">
+                    <div class="post-user">👤</div>
+                    <div class="post-username" id="postUsername">Your Instagram Archive</div>
+                </div>
+                <div class="post-caption" id="postCaption"></div>
+                <div class="post-date" id="postDate"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('jsonFileInput');
+            const postsGrid = document.getElementById('postsGrid');
+            const postModal = document.getElementById('postModal');
+            const closeModal = document.getElementById('closeModal');
+            const modalPrev = document.getElementById('modalPrev');
+            const modalNext = document.getElementById('modalNext');
+            const postMedia = document.getElementById('postMedia');
+            const postCaption = document.getElementById('postCaption');
+            const postDate = document.getElementById('postDate');
+            const postCount = document.getElementById('post-count');
+            const dateRange = document.getElementById('date-range');
+            const loadingPosts = document.getElementById('loadingPosts');
+            
+            let posts = [];
+            let currentPostIndex = 0;
+            
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    loadingPosts.style.display = 'block';
+                    postsGrid.innerHTML = '';
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const jsonData = JSON.parse(e.target.result);
+                            processInstagramData(jsonData);
+                        } catch (error) {
+                            console.error('Error parsing JSON:', error);
+                            alert('Error parsing the JSON file. Please make sure it\'s a valid Instagram data export file.');
+                        } finally {
+                            loadingPosts.style.display = 'none';
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            function processInstagramData(data) {
+                // Check if data is an array (as expected from the provided excerpt)
+                if (Array.isArray(data)) {
+                    posts = data;
+                } else {
+                    // Try to handle the case where it might be wrapped in another object
+                    posts = data.posts || data;
+                    
+                    // If still not an array, try to find the first array property
+                    if (!Array.isArray(posts)) {
+                        for (const key in data) {
+                            if (Array.isArray(data[key])) {
+                                posts = data[key];
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (!Array.isArray(posts) || posts.length === 0) {
+                    alert('Could not find any posts in the JSON file. Please make sure you\'re using the correct file from your Instagram export.');
+                    return;
+                }
+                
+                // Update post count
+                postCount.textContent = posts.length;
+                
+                // Find oldest and newest post dates
+                const timestamps = posts.map(post => post.creation_timestamp || (post.media && post.media[0] && post.media[0].creation_timestamp) || 0);
+                const oldestTimestamp = Math.min(...timestamps.filter(t => t > 0));
+                const newestTimestamp = Math.max(...timestamps);
+                
+                if (oldestTimestamp && newestTimestamp) {
+                    const oldestDate = new Date(oldestTimestamp * 1000);
+                    const newestDate = new Date(newestTimestamp * 1000);
+                    
+                    dateRange.textContent = `${formatDate(oldestDate)} - ${formatDate(newestDate)}`;
+                }
+                
+                // Render posts grid
+                renderPostsGrid(posts);
+            }
+            
+            function renderPostsGrid(posts) {
+                postsGrid.innerHTML = '';
+                
+                posts.forEach((post, index) => {
+                    if (!post.media || post.media.length === 0) return;
+                    
+                    const firstMedia = post.media[0];
+                    const isVideo = firstMedia.uri && firstMedia.uri.includes('.mp4');
+                    const isMultipleMedia = post.media.length > 1;
+                    
+                    const gridItem = document.createElement('div');
+                    gridItem.className = 'grid-item';
+                    gridItem.dataset.index = index;
+                    
+                    if (isVideo) {
+                        // For videos, create a thumbnail with a video indicator
+                        const thumbnail = document.createElement('img');
+                        // Check if there's a thumbnail or use a placeholder
+                        thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                        thumbnail.alt = 'Video thumbnail';
+                        
+                        // Add video indicator
+                        const videoIndicator = document.createElement('div');
+                        videoIndicator.className = 'video-indicator';
+                        videoIndicator.textContent = '▶ Video';
+                        
+                        gridItem.appendChild(thumbnail);
+                        gridItem.appendChild(videoIndicator);
+                    } else {
+                        // For images, create an image element
+                        const image = document.createElement('img');
+                        
+                        // Get the local path from the uri
+                        const uri = firstMedia.uri;
+                        let imagePath = uri;
+                        
+                        // If it's a relative path to a local file in the export
+                        if (uri && !uri.startsWith('http')) {
+                            // Extract the local path component and make it relative to current page
+                            const parts = uri.split('/');
+                            const fileName = parts[parts.length - 1];
+                            
+                            // Assuming structure like 'media/posts/YYYY/filename'
+                            if (parts.length >= 3) {
+                                const folder = parts[parts.length - 2];
+                                imagePath = `media/${folder}/${fileName}`;
+                            } else {
+                                imagePath = fileName;
+                            }
+                        }
+                        
+                        // Set a placeholder image in case the file isn't found
+                        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                        image.dataset.src = imagePath;
+                        image.alt = post.title || 'Instagram post';
+                        
+                        // Try to load the actual image
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            image.src = imagePath;
+                        };
+                        testImg.src = imagePath;
+                        
+                        gridItem.appendChild(image);
+                        
+                        // Add multiple media indicator if needed
+                        if (isMultipleMedia) {
+                            const multiIndicator = document.createElement('div');
+                            multiIndicator.className = 'multi-indicator';
+                            multiIndicator.textContent = `⊞ ${post.media.length}`;
+                            gridItem.appendChild(multiIndicator);
+                        }
+                    }
+                    
+                    // Add click event to open the modal
+                    gridItem.addEventListener('click', function() {
+                        openPostModal(index);
+                    });
+                    
+                    postsGrid.appendChild(gridItem);
+                });
+            }
+            
+            function openPostModal(index) {
+                currentPostIndex = index;
+                const post = posts[index];
+                
+                if (!post || !post.media || post.media.length === 0) return;
+                
+                // Update caption and date
+                postCaption.textContent = post.title || '';
+                postDate.textContent = formatDateTime(new Date(post.creation_timestamp * 1000));
+                
+                // Clear previous media
+                postMedia.innerHTML = '';
+                
+                // Create media container for slideshow if multiple media
+                const mediaContainer = document.createElement('div');
+                mediaContainer.className = 'media-container';
+                postMedia.appendChild(mediaContainer);
+                
+                // Add each media item
+                post.media.forEach((media, mediaIndex) => {
+                    const isVideo = media.uri && media.uri.includes('.mp4');
+                    const mediaSlide = document.createElement('div');
+                    mediaSlide.className = `media-slide ${mediaIndex === 0 ? 'active' : ''}`;
+                    
+                    if (isVideo) {
+                        const video = document.createElement('video');
+                        video.controls = true;
+                        
+                        // Get the local path from the uri
+                        let videoPath = media.uri;
+                        if (media.uri && !media.uri.startsWith('http')) {
+                            const parts = media.uri.split('/');
+                            const fileName = parts[parts.length - 1];
+                            if (parts.length >= 3) {
+                                const folder = parts[parts.length - 2];
+                                videoPath = `media/${folder}/${fileName}`;
+                            } else {
+                                videoPath = fileName;
+                            }
+                        }
+                        
+                        video.src = videoPath;
+                        mediaSlide.appendChild(video);
+                    } else {
+                        const image = document.createElement('img');
+                        
+                        // Get the local path from the uri
+                        let imagePath = media.uri;
+                        if (media.uri && !media.uri.startsWith('http')) {
+                            const parts = media.uri.split('/');
+                            const fileName = parts[parts.length - 1];
+                            if (parts.length >= 3) {
+                                const folder = parts[parts.length - 2];
+                                imagePath = `media/${folder}/${fileName}`;
+                            } else {
+                                imagePath = fileName;
+                            }
+                        }
+                        
+                        // Set a placeholder and try to load the actual image
+                        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            image.src = imagePath;
+                        };
+                        testImg.src = imagePath;
+                        
+                        image.alt = media.title || post.title || 'Instagram post';
+                        mediaSlide.appendChild(image);
+                    }
+                    
+                    mediaContainer.appendChild(mediaSlide);
+                });
+                
+                // If multiple media, add navigation and indicators
+                if (post.media.length > 1) {
+                    // Add slideshow navigation
+                    const prevBtn = document.createElement('div');
+                    prevBtn.className = 'slideshow-nav slideshow-prev';
+                    prevBtn.textContent = '❮';
+                    prevBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        navigateSlideshow(-1);
+                    });
+                    
+                    const nextBtn = document.createElement('div');
+                    nextBtn.className = 'slideshow-nav slideshow-next';
+                    nextBtn.textContent = '❯';
+                    nextBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        navigateSlideshow(1);
+                    });
+                    
+                    mediaContainer.appendChild(prevBtn);
+                    mediaContainer.appendChild(nextBtn);
+                    
+                    // Add slideshow indicators
+                    const indicatorContainer = document.createElement('div');
+                    indicatorContainer.className = 'slideshow-indicator';
+                    
+                    for (let i = 0; i < post.media.length; i++) {
+                        const dot = document.createElement('div');
+                        dot.className = `slideshow-dot ${i === 0 ? 'active' : ''}`;
+                        dot.dataset.index = i;
+                        dot.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const clickedIndex = parseInt(this.dataset.index);
+                            showSlide(clickedIndex);
+                        });
+                        indicatorContainer.appendChild(dot);
+                    }
+                    
+                    mediaContainer.appendChild(indicatorContainer);
+                }
+                
+                // Show the modal
+                postModal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+            
+            let currentSlideIndex = 0;
+            
+            function showSlide(index) {
+                const slides = document.querySelectorAll('.media-slide');
+                const dots = document.querySelectorAll('.slideshow-dot');
+                
+                // Hide all slides
+                slides.forEach(slide => {
+                    slide.classList.remove('active');
+                });
+                
+                // Remove active class from all dots
+                dots.forEach(dot => {
+                    dot.classList.remove('active');
+                });
+                
+                // Show the selected slide and dot
+                slides[index].classList.add('active');
+                if (dots.length > 0) {
+                    dots[index].classList.add('active');
+                }
+                
+                currentSlideIndex = index;
+            }
+            
+            function navigateSlideshow(direction) {
+                const slides = document.querySelectorAll('.media-slide');
+                if (slides.length === 0) return;
+                
+                let newIndex = currentSlideIndex + direction;
+                
+                // Handle wrap-around
+                if (newIndex < 0) newIndex = slides.length - 1;
+                if (newIndex >= slides.length) newIndex = 0;
+                
+                showSlide(newIndex);
+            }
+            
+            function closePostModal() {
+                postModal.style.display = 'none';
+                document.body.style.overflow = '';
+                
+                // Pause any videos that might be playing
+                const videos = postModal.querySelectorAll('video');
+                videos.forEach(video => {
+                    video.pause();
+                });
+            }
+            
+            function navigatePost(direction) {
+                let newIndex = currentPostIndex + direction;
+                
+                // Handle wrap-around
+                if (newIndex < 0) newIndex = posts.length - 1;
+                if (newIndex >= posts.length) newIndex = 0;
+                
+                // Reset current slide index for new post
+                currentSlideIndex = 0;
+                
+                openPostModal(newIndex);
+            }
+            
+            // Event listeners for modal navigation
+            closeModal.addEventListener('click', closePostModal);
+            
+            modalPrev.addEventListener('click', function(e) {
+                e.stopPropagation();
+                navigatePost(-1);
+            });
+            
+            modalNext.addEventListener('click', function(e) {
+                e.stopPropagation();
+                navigatePost(1);
+            });
+            
+            // Close modal when clicking outside the content
+            postModal.addEventListener('click', function(e) {
+                if (e.target === postModal) {
+                    closePostModal();
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (postModal.style.display === 'none') return;
+                
+                if (e.key === 'Escape') {
+                    closePostModal();
+                } else if (e.key === 'ArrowLeft') {
+                    const slides = document.querySelectorAll('.media-slide');
+                    if (slides.length > 1) {
+                        navigateSlideshow(-1);
+                    } else {
+                        navigatePost(-1);
+                    }
+                } else if (e.key === 'ArrowRight') {
+                    const slides = document.querySelectorAll('.media-slide');
+                    if (slides.length > 1) {
+                        navigateSlideshow(1);
+                    } else {
+                        navigatePost(1);
+                    }
+                }
+            });
+            
+            // Helper functions for formatting dates
+            function formatDateTime(date) {
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            function formatDate(date) {
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        });
+    </script>
+</body>
+</html>
