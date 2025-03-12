@@ -589,8 +589,18 @@
                 // Update post count
                 postCount.textContent = posts.length;
                 
-                // Find oldest and newest post dates - always use post.creation_timestamp
-                const timestamps = posts.map(post => post.creation_timestamp || 0);
+                // Find oldest and newest post dates - use post.creation_timestamp or media timestamp
+                const timestamps = posts.map(post => {
+                    // Try to get timestamp from post or first media item
+                    if (post.creation_timestamp) {
+                        return post.creation_timestamp;
+                    } else if (post.media && post.media.length > 0 && post.media[0].creation_timestamp) {
+                        return post.media[0].creation_timestamp;
+                    } else {
+                        return 0;
+                    }
+                });
+                
                 const oldestTimestamp = Math.min(...timestamps.filter(t => t > 0));
                 const newestTimestamp = Math.max(...timestamps);
                 
@@ -699,9 +709,17 @@
                 const mediaTitle = post.media && post.media.length > 0 ? post.media[0].title : '';
                 postCaption.textContent = post.caption || mediaTitle || post.title || '';
                 
-                // Always use post's creation_timestamp for the date
-                const timestamp = post.creation_timestamp * 1000;
-                postDate.textContent = formatDateTime(new Date(timestamp));
+                // Get timestamp from post or from first media item if post timestamp doesn't exist
+                let timestamp;
+                if (post.creation_timestamp) {
+                    timestamp = post.creation_timestamp * 1000;
+                } else if (post.media && post.media.length > 0 && post.media[0].creation_timestamp) {
+                    timestamp = post.media[0].creation_timestamp * 1000;
+                } else {
+                    timestamp = null;
+                }
+                
+                postDate.textContent = timestamp ? formatDateTime(new Date(timestamp)) : 'No date available';
                 
                 // Update profile picture in modal if available
                 const postUserPic = document.getElementById('postUserPic');
