@@ -487,6 +487,47 @@
             let currentPostIndex = 0;
             let userInfo = {};
             
+            let userTimezone = 'America/New_York'; // Default timezone
+            
+            // Load timezone information
+            fetch('personal_information/information_about_you/profile_based_in.json')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.inferred_data_primary_location && 
+                        data.inferred_data_primary_location.length > 0 &&
+                        data.inferred_data_primary_location[0].string_map_data &&
+                        data.inferred_data_primary_location[0].string_map_data["City Name"]) {
+                        
+                        const location = data.inferred_data_primary_location[0].string_map_data["City Name"].value;
+                        
+                        // Map common US cities/states to timezones
+                        if (location.includes('New York') || 
+                            location.includes('Virginia') || 
+                            location.includes('Florida') || 
+                            location.includes('Georgia')) {
+                            userTimezone = 'America/New_York';
+                        } else if (location.includes('Chicago') || 
+                                  location.includes('Texas') || 
+                                  location.includes('Illinois')) {
+                            userTimezone = 'America/Chicago';
+                        } else if (location.includes('Denver') || 
+                                  location.includes('Colorado') || 
+                                  location.includes('Utah')) {
+                            userTimezone = 'America/Denver';
+                        } else if (location.includes('Los Angeles') || 
+                                  location.includes('California') || 
+                                  location.includes('Washington') || 
+                                  location.includes('Oregon')) {
+                            userTimezone = 'America/Los_Angeles';
+                        }
+                        
+                        console.log('Detected timezone:', userTimezone, 'based on location:', location);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading timezone information:', error);
+                });
+            
             // Load personal information
             fetch('personal_information/personal_information/personal_information.json')
                 .then(response => {
@@ -963,20 +1004,24 @@
             
             // Helper functions for formatting dates
             function formatDateTime(date) {
-                return date.toLocaleString('en-US', {
+                const options = {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+                    hour: 'numeric', // Use 'numeric' instead of '2-digit' to remove leading zeros
+                    minute: '2-digit',
+                    timeZone: userTimezone
+                };
+                
+                return date.toLocaleString('en-US', options);
             }
             
             function formatDate(date) {
                 return date.toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
-                    day: 'numeric'
+                    day: 'numeric',
+                    timeZone: userTimezone
                 });
             }
         });
