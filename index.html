@@ -766,7 +766,12 @@
                 // Update caption and date
                 // Get caption from the first media item's title if available
                 const mediaTitle = post.media && post.media.length > 0 ? post.media[0].title : '';
-                postCaption.textContent = post.caption || mediaTitle || post.title || '';
+                
+                // Decode any Unicode escape sequences in the caption
+                let caption = post.caption || mediaTitle || post.title || '';
+                caption = decodeUnicodeEscapes(caption);
+                
+                postCaption.textContent = caption;
                 
                 // Get timestamp from post or from first media item if post timestamp doesn't exist
                 let timestamp;
@@ -1045,6 +1050,16 @@
                     month: 'short',
                     day: 'numeric',
                     timeZone: userTimezone
+                });
+            }
+            
+            // Helper function to decode Unicode escape sequences like \u00f0\u009f\u0098\u0085
+            function decodeUnicodeEscapes(str) {
+                if (!str) return '';
+                
+                // Replace Unicode escape sequences with their actual characters
+                return str.replace(/\\u([0-9a-fA-F]{4})/g, function(match, hex) {
+                    return String.fromCharCode(parseInt(hex, 16));
                 });
             }
         });
