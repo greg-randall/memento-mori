@@ -232,6 +232,37 @@
             font-size: 12px;
             border-top: 1px solid var(--instagram-border);
         }
+            
+        .post-stats {
+            padding: 12px 16px;
+            color: var(--instagram-text);
+            font-size: 14px;
+            border-top: 1px solid var(--instagram-border);
+            display: flex;
+            gap: 16px;
+        }
+            
+        .post-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+            
+        .post-stat-icon {
+            font-size: 16px;
+        }
+            
+        .likes-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 2;
+        }
         
         .close-modal {
             position: absolute;
@@ -491,6 +522,7 @@
                     <div class="post-username" id="postUsername">Your Instagram Archive</div>
                 </div>
                 <div class="post-caption" id="postCaption"></div>
+                <div class="post-stats" id="postStats"></div>
                 <div class="post-date" id="postDate"></div>
             </div>
         </div>
@@ -516,6 +548,7 @@
             let posts = [];
             let currentPostIndex = 0;
             let userInfo = {};
+            let insightsData = [];
             
             let userTimezone = 'America/New_York'; // Default timezone
             
@@ -634,17 +667,44 @@
             // Automatically load the Instagram data from the fixed path
             loadingPosts.style.display = 'block';
             
-            // Wait for timezone info to load first, then load posts
-            timezonePromise.then(() => {
-                console.log('Loading posts with timezone:', userTimezone);
-                
-                return fetch('your_instagram_activity/content/posts_1.json')
+            // Load insights data if available
+            function loadInsightsData() {
+                return fetch('logged_information/past_instagram_insights/posts.json')
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Failed to load Instagram data. Make sure the file exists at your_instagram_activity/content/posts_1.json');
+                            console.log('Insights data not available');
+                            return { organic_insights_posts: [] };
                         }
                         return response.json();
                     })
+                    .then(data => {
+                        console.log('Loaded insights data for', data.organic_insights_posts?.length || 0, 'posts');
+                        return data.organic_insights_posts || [];
+                    })
+                    .catch(error => {
+                        console.error('Error loading insights data:', error);
+                        return [];
+                    });
+            }
+            
+            // Wait for timezone info to load first, then load posts and insights
+            timezonePromise.then(() => {
+                console.log('Loading posts with timezone:', userTimezone);
+                
+                // Load both posts and insights data in parallel
+                return Promise.all([
+                    fetch('your_instagram_activity/content/posts_1.json'),
+                    loadInsightsData()
+                ]);
+            })
+            .then(([postsResponse, insightsData]) => {
+                // Store insights data globally
+                window.insightsData = insightsData;
+                
+                if (!postsResponse.ok) {
+                    throw new Error('Failed to load Instagram data. Make sure the file exists at your_instagram_activity/content/posts_1.json');
+                }
+                return postsResponse.json();
                     .then(jsonData => {
                         processInstagramData(jsonData);
                     })
@@ -710,6 +770,30 @@
                 
                 // Render posts grid
                 renderPostsGrid(posts);
+            }
+            
+            // Helper function to find insights data for a post
+            function findInsightsForPost(post) {
+                if (!window.insightsData || window.insightsData.length === 0) return null;
+                
+                // Get timestamp from post
+                let postTimestamp;
+                if (post.creation_timestamp) {
+                    postTimestamp = post.creation_timestamp;
+                } else if (post.media && post.media.length > 0 && post.media[0].creation_timestamp) {
+                    postTimestamp = post.media[0].creation_timestamp;
+                } else {
+                    return null;
+                }
+                
+                // Find matching insights by timestamp
+                return window.insightsData.find(insight => {
+                    if (insight.string_map_data && insight.string_map_data["Creation Timestamp"]) {
+                        const insightTimestamp = insight.string_map_data["Creation Timestamp"].timestamp;
+                        return insightTimestamp === postTimestamp;
+                    }
+                    return false;
+                });
             }
             
             function renderPostsGrid(posts) {
@@ -827,6 +911,22 @@
                             multiIndicator.textContent = `⊞ ${post.media.length}`;
                             gridItem.appendChild(multiIndicator);
                         }
+                        
+                        // Add likes indicator if available in insights
+                        const insights = findInsightsForPost(post);
+                        if (insights && 
+                            insights.string_map_data && 
+                            insights.string_map_data["Likes"] && 
+                            insights.string_map_data["Likes"].value) {
+                            
+                            const likesCount = parseInt(insights.string_map_data["Likes"].value);
+                            if (likesCount > 0) {
+                                const likesIndicator = document.createElement('div');
+                                likesIndicator.className = 'likes-indicator';
+                                likesIndicator.textContent = `♥ ${likesCount}`;
+                                gridItem.appendChild(likesIndicator);
+                            }
+                        }
                     }
                     
                     // Add click event to open the modal
@@ -843,6 +943,9 @@
                 const post = posts[index];
                 
                 if (!post || !post.media || post.media.length === 0) return;
+                
+                // Find insights data for this post
+                const insights = findInsightsForPost(post);
                 
                 // Update caption and date
                 // Get caption from the first media item's title if available
@@ -865,6 +968,47 @@
                 }
                 
                 postDate.textContent = timestamp ? formatDateTime(new Date(timestamp)) : 'No date available';
+                
+                // Update stats (views and likes) if available
+                const postStats = document.getElementById('postStats');
+                postStats.innerHTML = '';
+                
+                if (insights && insights.string_map_data) {
+                    // Add views (impressions)
+                    if (insights.string_map_data["Impressions"] && 
+                        insights.string_map_data["Impressions"].value) {
+                        const viewsCount = parseInt(insights.string_map_data["Impressions"].value);
+                        if (viewsCount > 0) {
+                            const viewsStat = document.createElement('div');
+                            viewsStat.className = 'post-stat';
+                            viewsStat.innerHTML = `
+                                <span class="post-stat-icon">👁️</span>
+                                <span>${viewsCount} views</span>
+                            `;
+                            postStats.appendChild(viewsStat);
+                        }
+                    }
+                    
+                    // Add likes
+                    if (insights.string_map_data["Likes"] && 
+                        insights.string_map_data["Likes"].value) {
+                        const likesCount = parseInt(insights.string_map_data["Likes"].value);
+                        if (likesCount > 0) {
+                            const likesStat = document.createElement('div');
+                            likesStat.className = 'post-stat';
+                            likesStat.innerHTML = `
+                                <span class="post-stat-icon">♥</span>
+                                <span>${likesCount} likes</span>
+                            `;
+                            postStats.appendChild(likesStat);
+                        }
+                    }
+                    
+                    // Show or hide the stats section based on content
+                    postStats.style.display = postStats.children.length > 0 ? 'flex' : 'none';
+                } else {
+                    postStats.style.display = 'none';
+                }
                 
                 // Update profile picture in modal if available
                 const postUserPic = document.getElementById('postUserPic');
