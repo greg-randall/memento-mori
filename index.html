@@ -1057,10 +1057,26 @@
             function decodeUnicodeEscapes(str) {
                 if (!str) return '';
                 
-                // Replace Unicode escape sequences with their actual characters
-                return str.replace(/\\u([0-9a-fA-F]{4})/g, function(match, hex) {
-                    return String.fromCharCode(parseInt(hex, 16));
-                });
+                try {
+                    // First, properly escape the string if it contains literal backslashes
+                    // This handles cases where the JSON might have already been parsed
+                    let processedStr = str;
+                    
+                    // If the string contains literal "\u" sequences, we need to handle them
+                    if (processedStr.includes('\\u')) {
+                        // Replace all Unicode escape sequences
+                        processedStr = processedStr.replace(/\\u([0-9a-fA-F]{4})/g, (match, hex) => {
+                            return String.fromCodePoint(parseInt(hex, 16));
+                        });
+                    }
+                    
+                    // For emoji that use surrogate pairs (like many emoji)
+                    // This will properly combine surrogate pairs into single characters
+                    return processedStr;
+                } catch (e) {
+                    console.error('Error decoding Unicode escapes:', e);
+                    return str; // Return original string if there's an error
+                }
             }
         });
     </script>
