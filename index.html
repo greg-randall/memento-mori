@@ -779,21 +779,20 @@
                             }
                         }
                         
-                        // If no thumbnail found, use a placeholder
-                        if (!thumbnailPath) {
-                            thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
-                        } else {
-                            // Set a placeholder initially
-                            thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
-                            
-                            // Try to load the thumbnail
-                            tryLoadImage(thumbnail, thumbnailPath, function() {
-                                // If loading fails, use a placeholder
-                                thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
-                            });
-                        }
-                        
+                        // Set a placeholder initially
+                        thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         thumbnail.alt = 'Video thumbnail';
+                        
+                        // If we found a thumbnail image, try to load it
+                        if (thumbnailPath) {
+                            tryLoadImage(thumbnail, thumbnailPath, function() {
+                                // If thumbnail image fails, try to use the video itself as a thumbnail
+                                createVideoThumbnail(firstMedia.uri, thumbnail);
+                            });
+                        } else {
+                            // No thumbnail image found, try to use the video itself as a thumbnail
+                            createVideoThumbnail(firstMedia.uri, thumbnail);
+                        }
                         
                         // Add video indicator
                         const videoIndicator = document.createElement('div');
@@ -1240,6 +1239,94 @@
                 };
                 
                 img.src = pathWithExt;
+            }
+            
+            // Function to create a thumbnail from a video
+            function createVideoThumbnail(videoPath, imgElement) {
+                // Create a hidden video element to extract a frame
+                const video = document.createElement('video');
+                video.style.display = 'none';
+                video.crossOrigin = 'anonymous'; // Avoid CORS issues if possible
+                
+                // Set up event listeners
+                video.onloadedmetadata = function() {
+                    // Try to seek to a point in the video
+                    try {
+                        // Seek to 25% of the video duration if possible
+                        if (video.duration && isFinite(video.duration)) {
+                            video.currentTime = Math.min(video.duration * 0.25, 1.0);
+                        } else {
+                            // If duration is not available, seek to 1 second
+                            video.currentTime = 1.0;
+                        }
+                    } catch (e) {
+                        console.warn('Error seeking in video:', e);
+                        // If seeking fails, try to capture the current frame
+                        captureVideoFrame();
+                    }
+                };
+                
+                video.onseeked = function() {
+                    captureVideoFrame();
+                };
+                
+                video.onerror = function() {
+                    console.warn('Error loading video for thumbnail:', videoPath);
+                    // If video fails to load, keep the placeholder
+                    imgElement.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                    
+                    // Clean up
+                    if (document.body.contains(video)) {
+                        document.body.removeChild(video);
+                    }
+                };
+                
+                // Function to capture a frame from the video
+                function captureVideoFrame() {
+                    try {
+                        // Create a canvas to draw the video frame
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth || 300;
+                        canvas.height = video.videoHeight || 300;
+                        
+                        // Draw the current frame to the canvas
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        
+                        // Convert canvas to an image and set as thumbnail
+                        const dataUrl = canvas.toDataURL('image/jpeg');
+                        imgElement.src = dataUrl;
+                        
+                        // Clean up
+                        if (document.body.contains(video)) {
+                            document.body.removeChild(video);
+                        }
+                    } catch (e) {
+                        console.error('Error capturing video frame:', e);
+                        imgElement.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                        
+                        // Clean up
+                        if (document.body.contains(video)) {
+                            document.body.removeChild(video);
+                        }
+                    }
+                }
+                
+                // Add the video to the document to start loading
+                document.body.appendChild(video);
+                
+                // Set the source and start loading
+                video.src = videoPath;
+                video.load();
+                
+                // Set a timeout in case the video takes too long to load
+                setTimeout(function() {
+                    if (document.body.contains(video)) {
+                        console.warn('Video thumbnail generation timed out');
+                        imgElement.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                        document.body.removeChild(video);
+                    }
+                }, 5000); // 5 second timeout
             }
         });
     </script>
