@@ -421,11 +421,8 @@
     </header>
     
     <main>
-        <div class="file-input-container">
-            <h2>Select your Instagram data</h2>
-            <p>Please select the posts_1.json file from your Instagram data export folder:</p>
-            <br>
-            <input type="file" id="jsonFileInput" accept=".json">
+        <div class="loading" id="loadingPosts">
+            Loading posts...
         </div>
         
         <div class="profile-info">
@@ -471,7 +468,6 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const fileInput = document.getElementById('jsonFileInput');
             const postsGrid = document.getElementById('postsGrid');
             const postModal = document.getElementById('postModal');
             const closeModal = document.getElementById('closeModal');
@@ -487,27 +483,26 @@
             let posts = [];
             let currentPostIndex = 0;
             
-            fileInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    loadingPosts.style.display = 'block';
-                    postsGrid.innerHTML = '';
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            const jsonData = JSON.parse(e.target.result);
-                            processInstagramData(jsonData);
-                        } catch (error) {
-                            console.error('Error parsing JSON:', error);
-                            alert('Error parsing the JSON file. Please make sure it\'s a valid Instagram data export file.');
-                        } finally {
-                            loadingPosts.style.display = 'none';
-                        }
-                    };
-                    reader.readAsText(file);
-                }
-            });
+            // Automatically load the Instagram data from the fixed path
+            loadingPosts.style.display = 'block';
+            
+            fetch('/your_instagram_activity/content/post_1.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load Instagram data. Make sure the file exists at /your_instagram_activity/content/post_1.json');
+                    }
+                    return response.json();
+                })
+                .then(jsonData => {
+                    processInstagramData(jsonData);
+                })
+                .catch(error => {
+                    console.error('Error loading JSON:', error);
+                    alert('Error loading Instagram data: ' + error.message);
+                })
+                .finally(() => {
+                    loadingPosts.style.display = 'none';
+                });
             
             function processInstagramData(data) {
                 // Check if data is an array (as expected from the provided excerpt)
