@@ -486,10 +486,10 @@
             // Automatically load the Instagram data from the fixed path
             loadingPosts.style.display = 'block';
             
-            fetch('your_instagram_activity/content/post_1.json')
+            fetch('content/post_1.json')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Failed to load Instagram data. Make sure the file exists at /your_instagram_activity/content/post_1.json');
+                        throw new Error('Failed to load Instagram data. Make sure the file exists at content/post_1.json');
                     }
                     return response.json();
                 })
