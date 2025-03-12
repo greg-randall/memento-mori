@@ -457,7 +457,7 @@
             </div>
             <div class="post-info">
                 <div class="post-header">
-                    <div class="post-user">👤</div>
+                    <div class="post-user" id="postUserPic">👤</div>
                     <div class="post-username" id="postUsername">Your Instagram Archive</div>
                 </div>
                 <div class="post-caption" id="postCaption"></div>
@@ -479,9 +479,50 @@
             const postCount = document.getElementById('post-count');
             const dateRange = document.getElementById('date-range');
             const loadingPosts = document.getElementById('loadingPosts');
+            const username = document.getElementById('username');
+            const postUsername = document.getElementById('postUsername');
+            const profilePicture = document.querySelector('.profile-picture');
             
             let posts = [];
             let currentPostIndex = 0;
+            let userInfo = {};
+            
+            // Load personal information
+            fetch('personal_information/personal_information/personal_information.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load personal information');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    userInfo = data;
+                    
+                    // Update username
+                    if (userInfo.profile && userInfo.profile.username) {
+                        username.textContent = userInfo.profile.username;
+                        postUsername.textContent = userInfo.profile.username;
+                    }
+                    
+                    // Update profile picture if available
+                    if (userInfo.profile && userInfo.profile.profile_pic_url) {
+                        // Create an image element for the profile picture
+                        const profileImg = document.createElement('img');
+                        profileImg.src = userInfo.profile.profile_pic_url;
+                        profileImg.alt = 'Profile Picture';
+                        profileImg.style.width = '100%';
+                        profileImg.style.height = '100%';
+                        profileImg.style.objectFit = 'cover';
+                        profileImg.style.borderRadius = '50%';
+                        
+                        // Clear the profile picture div and add the image
+                        profilePicture.innerHTML = '';
+                        profilePicture.appendChild(profileImg);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading personal information:', error);
+                });
             
             // Automatically load the Instagram data from the fixed path
             loadingPosts.style.display = 'block';
@@ -639,6 +680,20 @@
                 // Update caption and date
                 postCaption.textContent = post.title || '';
                 postDate.textContent = formatDateTime(new Date(post.creation_timestamp * 1000));
+                
+                // Update profile picture in modal if available
+                const postUserPic = document.getElementById('postUserPic');
+                if (userInfo.profile && userInfo.profile.profile_pic_url) {
+                    postUserPic.innerHTML = '';
+                    const profileImg = document.createElement('img');
+                    profileImg.src = userInfo.profile.profile_pic_url;
+                    profileImg.alt = 'Profile';
+                    profileImg.style.width = '100%';
+                    profileImg.style.height = '100%';
+                    profileImg.style.objectFit = 'cover';
+                    profileImg.style.borderRadius = '50%';
+                    postUserPic.appendChild(profileImg);
+                }
                 
                 // Clear previous media
                 postMedia.innerHTML = '';
