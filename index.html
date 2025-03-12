@@ -549,6 +549,7 @@
             let currentPostIndex = 0;
             let userInfo = {};
             let insightsData = [];
+            const IMMEDIATE_LOAD_COUNT = 30; // Number of images to load immediately
             
             let userTimezone = 'America/New_York'; // Default timezone
             
@@ -770,6 +771,9 @@
                 
                 // Render posts grid
                 renderPostsGrid(posts);
+                
+                // Set up lazy loading after rendering
+                setupLazyLoading();
             }
             
             // Helper function to find insights data for a post
@@ -793,6 +797,34 @@
                         return insightTimestamp === postTimestamp;
                     }
                     return false;
+                });
+            }
+            
+            // Set up lazy loading for images
+            function setupLazyLoading() {
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target.querySelector('img[data-src]');
+                            if (img && img.dataset.src) {
+                                // Use the helper function to try multiple paths
+                                tryLoadImage(img, img.dataset.src, function() {
+                                    // If all attempts fail, set a placeholder
+                                    img.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                                });
+                                img.removeAttribute('data-src');
+                            }
+                            // Stop observing once loaded
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    rootMargin: '200px 0px', // Start loading when within 200px of viewport
+                });
+                
+                // Observe all grid items with lazy-load class
+                document.querySelectorAll('.grid-item.lazy-load').forEach(item => {
+                    observer.observe(item);
                 });
             }
             
@@ -843,6 +875,14 @@
                     gridItem.className = 'grid-item';
                     gridItem.dataset.index = index;
                     
+                    // Determine if this item should be lazy loaded (after the first IMMEDIATE_LOAD_COUNT)
+                    const shouldLazyLoad = index >= IMMEDIATE_LOAD_COUNT;
+                    
+                    // Add lazy-load class if needed
+                    if (shouldLazyLoad) {
+                        gridItem.classList.add('lazy-load');
+                    }
+                    
                     if (isVideo) {
                         // For videos, create a thumbnail with a video indicator
                         const thumbnail = document.createElement('img');
@@ -867,15 +907,24 @@
                         thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         thumbnail.alt = 'Video thumbnail';
                         
-                        // If we found a thumbnail image, try to load it
+                        // If we found a thumbnail image, handle based on lazy loading
                         if (thumbnailPath) {
-                            tryLoadImage(thumbnail, thumbnailPath, function() {
-                                // If thumbnail image fails, try to use the video itself as a thumbnail
-                                createVideoThumbnail(firstMedia.uri, thumbnail);
-                            });
+                            if (shouldLazyLoad) {
+                                thumbnail.dataset.src = thumbnailPath;
+                            } else {
+                                tryLoadImage(thumbnail, thumbnailPath, function() {
+                                    // If thumbnail image fails, try to use the video itself as a thumbnail
+                                    createVideoThumbnail(firstMedia.uri, thumbnail);
+                                });
+                            }
                         } else {
-                            // No thumbnail image found, try to use the video itself as a thumbnail
-                            createVideoThumbnail(firstMedia.uri, thumbnail);
+                            // No thumbnail image found
+                            if (shouldLazyLoad) {
+                                // Just keep the placeholder for lazy loaded items
+                            } else {
+                                // Try to use the video itself as a thumbnail for immediate load items
+                                createVideoThumbnail(firstMedia.uri, thumbnail);
+                            }
                         }
                         
                         // Add video indicator
@@ -896,11 +945,16 @@
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         image.alt = 'Instagram post';
                         
-                        // Use the helper function to try multiple paths
-                        tryLoadImage(image, imagePath, function() {
-                            // If all attempts fail, set a placeholder
-                            image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                        });
+                        if (shouldLazyLoad) {
+                            // For lazy loaded images, store the path in data-src
+                            image.dataset.src = imagePath;
+                        } else {
+                            // For immediate load images, load right away
+                            tryLoadImage(image, imagePath, function() {
+                                // If all attempts fail, set a placeholder
+                                image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                            });
+                        }
                         
                         gridItem.appendChild(image);
                         
