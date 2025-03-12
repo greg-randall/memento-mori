@@ -276,13 +276,18 @@
             font-size: 30px;
             cursor: pointer;
             z-index: 5;
-            background-color: rgba(0, 0, 0, 0.5);
-            width: 30px;
-            height: 30px;
+            background-color: rgba(0, 0, 0, 0.7);
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .slideshow-nav:hover {
+            background-color: rgba(0, 0, 0, 0.9);
         }
         
         .slideshow-prev {
@@ -295,20 +300,32 @@
         
         .slideshow-indicator {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             left: 0;
             right: 0;
             display: flex;
             justify-content: center;
             z-index: 5;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 8px 0;
+            border-radius: 20px;
+            width: auto;
+            max-width: 80%;
+            margin: 0 auto;
         }
         
         .slideshow-dot {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background-color: rgba(255, 255, 255, 0.5);
-            margin: 0 3px;
+            margin: 0 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .slideshow-dot:hover {
+            background-color: rgba(255, 255, 255, 0.8);
         }
         
         .slideshow-dot.active {
@@ -335,6 +352,19 @@
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .media-slide img, .media-slide video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .media-slide.active {
+            opacity: 1;
+            z-index: 2;
+            pointer-events: auto;
         }
         
         .media-slide.active {
@@ -725,17 +755,25 @@
                             }
                         }
                         
-                        // Set a placeholder image in case the file isn't found
-                        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                        image.dataset.src = imagePath;
+                        // Set a placeholder image initially
+                        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         image.alt = 'Instagram post';
                         
                         // Try to load the actual image
-                        const testImg = new Image();
-                        testImg.onload = function() {
-                            image.src = imagePath;
-                        };
-                        testImg.src = imagePath;
+                        fetch(imagePath)
+                            .then(response => {
+                                if (response.ok) {
+                                    image.src = imagePath;
+                                } else {
+                                    console.warn(`Failed to load image: ${imagePath}`);
+                                    // Keep the placeholder but update text
+                                    image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                                }
+                            })
+                            .catch(error => {
+                                console.error(`Error loading image: ${imagePath}`, error);
+                                image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                            });
                         
                         gridItem.appendChild(image);
                         
@@ -859,13 +897,24 @@
                             }
                         }
                         
-                        // Set a placeholder and try to load the actual image
-                        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                        const testImg = new Image();
-                        testImg.onload = function() {
-                            image.src = imagePath;
-                        };
-                        testImg.src = imagePath;
+                        // Set a placeholder initially
+                        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
+                        
+                        // Try to load the actual image
+                        fetch(imagePath)
+                            .then(response => {
+                                if (response.ok) {
+                                    image.src = imagePath;
+                                } else {
+                                    console.warn(`Failed to load image in modal: ${imagePath}`);
+                                    // Keep the placeholder but update text
+                                    image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                                }
+                            })
+                            .catch(error => {
+                                console.error(`Error loading image in modal: ${imagePath}`, error);
+                                image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                            });
                         
                         image.alt = 'Instagram post';
                         mediaSlide.appendChild(image);
