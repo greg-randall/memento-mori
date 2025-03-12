@@ -519,10 +519,8 @@
                             const profilePhotoData = profileData.media_map_data["Profile Photo"];
                             let profilePicUrl = profilePhotoData.uri;
                             
-                            // If backup_uri is available and it's a full URL, use it instead
-                            if (profilePhotoData.backup_uri && profilePhotoData.backup_uri.startsWith('http')) {
-                                profilePicUrl = profilePhotoData.backup_uri;
-                            }
+                            // Use the local URI path instead of the backup_uri
+                            profilePicUrl = profilePhotoData.uri;
                             
                             // Create an image element for the profile picture
                             const profileImg = document.createElement('img');
@@ -712,10 +710,8 @@
                         const profilePhotoData = profileData.media_map_data["Profile Photo"];
                         let profilePicUrl = profilePhotoData.uri;
                         
-                        // If backup_uri is available and it's a full URL, use it instead
-                        if (profilePhotoData.backup_uri && profilePhotoData.backup_uri.startsWith('http')) {
-                            profilePicUrl = profilePhotoData.backup_uri;
-                        }
+                        // Use the local URI path instead of the backup_uri
+                        profilePicUrl = profilePhotoData.uri;
                         
                         profileImg.src = profilePicUrl;
                         profileImg.alt = 'Profile';
