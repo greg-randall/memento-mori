@@ -498,26 +498,45 @@
                 .then(data => {
                     userInfo = data;
                     
-                    // Update username
-                    if (userInfo.profile && userInfo.profile.username) {
-                        username.textContent = userInfo.profile.username;
-                        postUsername.textContent = userInfo.profile.username;
-                    }
-                    
-                    // Update profile picture if available
-                    if (userInfo.profile && userInfo.profile.profile_pic_url) {
-                        // Create an image element for the profile picture
-                        const profileImg = document.createElement('img');
-                        profileImg.src = userInfo.profile.profile_pic_url;
-                        profileImg.alt = 'Profile Picture';
-                        profileImg.style.width = '100%';
-                        profileImg.style.height = '100%';
-                        profileImg.style.objectFit = 'cover';
-                        profileImg.style.borderRadius = '50%';
+                    // Extract user information from the JSON structure
+                    if (userInfo.profile_user && userInfo.profile_user.length > 0) {
+                        const profileData = userInfo.profile_user[0];
                         
-                        // Clear the profile picture div and add the image
-                        profilePicture.innerHTML = '';
-                        profilePicture.appendChild(profileImg);
+                        // Get username from string_map_data
+                        if (profileData.string_map_data && profileData.string_map_data.Username) {
+                            const usernameValue = profileData.string_map_data.Username.value;
+                            username.textContent = usernameValue;
+                            postUsername.textContent = usernameValue;
+                        } else if (profileData.string_map_data && profileData.string_map_data.Name) {
+                            // Fallback to Name if Username is not available
+                            const nameValue = profileData.string_map_data.Name.value;
+                            username.textContent = nameValue;
+                            postUsername.textContent = nameValue;
+                        }
+                        
+                        // Get profile picture from media_map_data
+                        if (profileData.media_map_data && profileData.media_map_data["Profile Photo"]) {
+                            const profilePhotoData = profileData.media_map_data["Profile Photo"];
+                            let profilePicUrl = profilePhotoData.uri;
+                            
+                            // If backup_uri is available and it's a full URL, use it instead
+                            if (profilePhotoData.backup_uri && profilePhotoData.backup_uri.startsWith('http')) {
+                                profilePicUrl = profilePhotoData.backup_uri;
+                            }
+                            
+                            // Create an image element for the profile picture
+                            const profileImg = document.createElement('img');
+                            profileImg.src = profilePicUrl;
+                            profileImg.alt = 'Profile Picture';
+                            profileImg.style.width = '100%';
+                            profileImg.style.height = '100%';
+                            profileImg.style.objectFit = 'cover';
+                            profileImg.style.borderRadius = '50%';
+                            
+                            // Clear the profile picture div and add the image
+                            profilePicture.innerHTML = '';
+                            profilePicture.appendChild(profileImg);
+                        }
                     }
                 })
                 .catch(error => {
@@ -683,16 +702,29 @@
                 
                 // Update profile picture in modal if available
                 const postUserPic = document.getElementById('postUserPic');
-                if (userInfo.profile && userInfo.profile.profile_pic_url) {
-                    postUserPic.innerHTML = '';
-                    const profileImg = document.createElement('img');
-                    profileImg.src = userInfo.profile.profile_pic_url;
-                    profileImg.alt = 'Profile';
-                    profileImg.style.width = '100%';
-                    profileImg.style.height = '100%';
-                    profileImg.style.objectFit = 'cover';
-                    profileImg.style.borderRadius = '50%';
-                    postUserPic.appendChild(profileImg);
+                if (userInfo.profile_user && userInfo.profile_user.length > 0) {
+                    const profileData = userInfo.profile_user[0];
+                    
+                    if (profileData.media_map_data && profileData.media_map_data["Profile Photo"]) {
+                        postUserPic.innerHTML = '';
+                        const profileImg = document.createElement('img');
+                        
+                        const profilePhotoData = profileData.media_map_data["Profile Photo"];
+                        let profilePicUrl = profilePhotoData.uri;
+                        
+                        // If backup_uri is available and it's a full URL, use it instead
+                        if (profilePhotoData.backup_uri && profilePhotoData.backup_uri.startsWith('http')) {
+                            profilePicUrl = profilePhotoData.backup_uri;
+                        }
+                        
+                        profileImg.src = profilePicUrl;
+                        profileImg.alt = 'Profile';
+                        profileImg.style.width = '100%';
+                        profileImg.style.height = '100%';
+                        profileImg.style.objectFit = 'cover';
+                        profileImg.style.borderRadius = '50%';
+                        postUserPic.appendChild(profileImg);
+                    }
                 }
                 
                 // Clear previous media
