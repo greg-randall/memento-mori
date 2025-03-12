@@ -720,7 +720,40 @@
                     
                     const firstMedia = post.media[0];
                     const isVideo = firstMedia.uri && firstMedia.uri.includes('.mp4');
-                    const isMultipleMedia = post.media.length > 1;
+                    // Count actual content media (excluding thumbnails that belong to videos)
+                    let contentMediaCount = 0;
+                    let hasVideo = false;
+                    
+                    // First pass: check if there's a video
+                    post.media.forEach(media => {
+                        if (media.uri && (
+                            media.uri.includes('.mp4') || 
+                            media.uri.includes('.mov') || 
+                            media.uri.includes('.avi')
+                        )) {
+                            hasVideo = true;
+                        }
+                    });
+                    
+                    // Second pass: count content media
+                    post.media.forEach(media => {
+                        // If this post has a video, only count the video itself
+                        // (assuming other media items are thumbnails)
+                        if (hasVideo) {
+                            if (media.uri && (
+                                media.uri.includes('.mp4') || 
+                                media.uri.includes('.mov') || 
+                                media.uri.includes('.avi')
+                            )) {
+                                contentMediaCount++;
+                            }
+                        } else {
+                            // If no video, count all media
+                            contentMediaCount++;
+                        }
+                    });
+                    
+                    const isMultipleMedia = contentMediaCount > 1;
                     
                     const gridItem = document.createElement('div');
                     gridItem.className = 'grid-item';
@@ -729,8 +762,37 @@
                     if (isVideo) {
                         // For videos, create a thumbnail with a video indicator
                         const thumbnail = document.createElement('img');
-                        // Check if there's a thumbnail or use a placeholder
-                        thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                        
+                        // Look for a thumbnail image in the post's media
+                        let thumbnailPath = null;
+                        
+                        // Check if there's a second media item that could be a thumbnail
+                        if (post.media.length > 1) {
+                            // Find the first non-video media item to use as thumbnail
+                            for (let i = 0; i < post.media.length; i++) {
+                                if (!post.media[i].uri.includes('.mp4') && 
+                                    !post.media[i].uri.includes('.mov') && 
+                                    !post.media[i].uri.includes('.avi')) {
+                                    thumbnailPath = post.media[i].uri;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // If no thumbnail found, use a placeholder
+                        if (!thumbnailPath) {
+                            thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                        } else {
+                            // Set a placeholder initially
+                            thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
+                            
+                            // Try to load the thumbnail
+                            tryLoadImage(thumbnail, thumbnailPath, function() {
+                                // If loading fails, use a placeholder
+                                thumbnail.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Video</text></svg>';
+                            });
+                        }
+                        
                         thumbnail.alt = 'Video thumbnail';
                         
                         // Add video indicator
@@ -840,16 +902,43 @@
                 
                 // Add each media item
                 post.media.forEach((media, mediaIndex) => {
-                    const isVideo = media.uri && media.uri.includes('.mp4');
+                    // Check if this is a video by looking for common video extensions
+                    const isVideo = media.uri && (
+                        media.uri.includes('.mp4') || 
+                        media.uri.includes('.mov') || 
+                        media.uri.includes('.avi')
+                    );
+                    
                     const mediaSlide = document.createElement('div');
                     mediaSlide.className = `media-slide ${mediaIndex === 0 ? 'active' : ''}`;
                     
                     if (isVideo) {
                         const video = document.createElement('video');
                         video.controls = true;
+                        video.preload = 'metadata'; // Only load metadata initially
                         
                         // Use the exact path from the uri
                         const videoPath = media.uri;
+                        
+                        // Set a poster (thumbnail) if available
+                        let posterFound = false;
+                        
+                        // Look for a thumbnail image in the post's media
+                        for (let i = 0; i < post.media.length; i++) {
+                            if (i !== mediaIndex && // Not the current video
+                                !post.media[i].uri.includes('.mp4') && 
+                                !post.media[i].uri.includes('.mov') && 
+                                !post.media[i].uri.includes('.avi')) {
+                                video.poster = post.media[i].uri;
+                                posterFound = true;
+                                break;
+                            }
+                        }
+                        
+                        // If no poster found, we'll just show the video without one
+                        if (!posterFound) {
+                            console.log('No poster found for video:', videoPath);
+                        }
                         
                         video.src = videoPath;
                         mediaSlide.appendChild(video);
