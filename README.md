@@ -1,90 +1,95 @@
-# Memento Mori - Your Instagram Archive Viewer
+# Memento Mori - Instagram Archive Viewer
 
 ![Memento Mori](https://img.shields.io/badge/Memento-Mori-E4405F?style=for-the-badge&logo=instagram&logoColor=white)
 
-## 🌟 Overview
+## Overview
 
-**Memento Mori** is a standalone, offline Instagram archive viewer that helps you explore and reflect on your digital legacy. The name "Memento Mori" (Latin for "remember that you will die") reminds us that our digital footprints, like our lives, are temporary yet meaningful.
+**Memento Mori** is a standalone, offline Instagram archive viewer that lets you browse your exported Instagram data in a familiar interface. The name "Memento Mori" (Latin for "remember that you will die") reflects the ephemeral nature of our digital content.
 
-This tool allows you to browse through your Instagram posts, photos, and videos in a familiar interface without requiring an internet connection or Instagram account. It works directly with the data export that Instagram provides to users.
+## Why This Exists
 
-## 🎯 Who Is This For?
+Instagram, like many social platforms, has undergone significant "enshittification" - a term coined to describe how platforms evolve:
 
-- **Privacy-conscious users** who want to view their Instagram content without being online
-- **Digital archivists** preserving social media history
-- **People leaving Instagram** but wanting to keep their memories accessible
-- **Nostalgic browsers** who enjoy reflecting on past posts and memories
-- **Digital minimalists** who have deleted their accounts but saved their data
+1. First, they attract users with a quality experience
+2. Then, they leverage their position to extract data and attention
+3. Finally, they degrade the user experience to maximize profit
 
-## ✨ Features
+This progression has led to:
+- Algorithmic feeds that prioritize engagement over chronology
+- Increasing ad density and sponsored content
+- Privacy concerns and data harvesting
+- Feature bloat that complicates the original experience
 
-- **Clean, Instagram-like interface** that feels familiar
-- **Works 100% offline** - no internet connection required
-- **View photos, videos, and carousels** just like on Instagram
-- **Read your original captions** and see post dates
-- **Browse chronologically** through your digital memories
-- **Responsive design** that works on desktop and mobile devices
-- **No tracking or data collection** - your data stays on your device
+**Memento Mori** lets you reclaim your content and view it on your terms - offline, private, and without the noise.
 
-## 🚀 Getting Started
+## Features
+
+- **Works 100% offline** - no internet connection or account required
+- **Clean, Instagram-like interface** without ads or algorithmic sorting
+- **View photos, videos, and carousels** in their original quality
+- **Read your original captions and comments**
+- **Browse chronologically** - the way social media used to work
+- **Responsive design** for desktop and mobile viewing
+- **Zero tracking or data collection** - your data stays on your device
+- **No dependencies** - pure HTML, CSS, and JavaScript
+
+## Getting Started
 
 ### Prerequisites
 
 - Your Instagram data export (JSON format)
-- A modern web browser (Chrome, Firefox, Safari, Edge)
+- A modern web browser
 
 ### How to Use
 
-1. **Request your Instagram data**:
+1. **Export your Instagram data**:
    - Go to Instagram > Settings > Privacy and Security > Data Download
-   - Request data in JSON format (important!)
-   - Wait for Instagram to email you the download link
+   - Request data in JSON format (not HTML)
+   - Wait for Instagram to email you the download link (can take hours or days)
 
 2. **Set up Memento Mori**:
    - Download this repository
-   - Extract your Instagram data archive into the same folder as this project
-   - Make sure the folder structure includes `your_instagram_activity/content/posts_1.json`
+   - Extract your Instagram data archive into the same folder
+   - Ensure the folder structure includes `your_instagram_activity/content/posts_1.json`
 
-3. **Launch the viewer**:
-   - Open `index.html` in your web browser
-   - Your posts should load automatically
+3. **View your archive**:
+   - Open `index.html` in any modern browser
+   - No server needed - everything runs locally in your browser
 
-## 📁 File Structure
-
-Your folder should look like this:
+## File Structure
 
 ```
 memento-mori/
-├── index.html                 # The main viewer file
-├── README.md                  # This file
-└── your_instagram_activity/   # From your Instagram export
+├── index.html                 # The viewer application
+├── README.md                  # This documentation
+└── your_instagram_activity/   # Your Instagram export
     └── content/
         └── posts_1.json       # Your posts data
 ```
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
-- **No posts showing?** Make sure your Instagram export is in JSON format and the file paths match the expected structure.
-- **Media not loading?** Instagram exports can sometimes have inconsistent file paths. Try moving your media files to match the paths in the JSON.
-- **Videos not playing?** Some browsers have restrictions on local video playback. Try using Chrome or Firefox.
+- **No posts showing?** Verify your export is in JSON format and the file paths match.
+- **Media not loading?** Instagram exports sometimes have inconsistent paths. Check the console for errors.
+- **Videos not playing?** Try Chrome or Firefox, which have better support for local video playback.
+- **Slow performance?** Large archives with many videos may load slowly. Be patient on first load.
 
-## 🛠️ Technical Details
+## Privacy & Security
 
-Memento Mori is built with vanilla JavaScript, HTML, and CSS. It doesn't require any server, database, or external libraries. It processes your Instagram JSON data locally in your browser and displays it in a familiar format.
+- This tool runs entirely in your browser
+- No data is sent to any server
+- No cookies or local storage used
+- No tracking or analytics
+- No external dependencies or CDNs
 
-## 🤝 Contributing
+## Technical Details
 
-Contributions are welcome! Feel free to submit issues or pull requests if you have ideas for improvements.
+Built with vanilla JavaScript, HTML, and CSS. No build process, frameworks, or external libraries.
 
-## 📝 License
+## License
 
-This project is open source and available under the MIT License.
-
-## 🙏 Acknowledgments
-
-- Inspired by the concept of digital legacy and preservation
-- Designed for those who value their digital memories but prefer offline browsing
+MIT License
 
 ---
 
-*Remember, your digital footprint tells a story. Memento Mori helps you preserve and reflect on that story, offline and on your own terms.*
+*Reclaim your content. View your memories on your terms.*
