@@ -489,44 +489,55 @@
             
             let userTimezone = 'America/New_York'; // Default timezone
             
-            // Load timezone information
-            fetch('personal_information/information_about_you/profile_based_in.json')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.inferred_data_primary_location && 
-                        data.inferred_data_primary_location.length > 0 &&
-                        data.inferred_data_primary_location[0].string_map_data &&
-                        data.inferred_data_primary_location[0].string_map_data["City Name"]) {
-                        
-                        const location = data.inferred_data_primary_location[0].string_map_data["City Name"].value;
-                        
-                        // Map common US cities/states to timezones
-                        if (location.includes('New York') || 
-                            location.includes('Virginia') || 
-                            location.includes('Florida') || 
-                            location.includes('Georgia')) {
-                            userTimezone = 'America/New_York';
-                        } else if (location.includes('Chicago') || 
-                                  location.includes('Texas') || 
-                                  location.includes('Illinois')) {
-                            userTimezone = 'America/Chicago';
-                        } else if (location.includes('Denver') || 
-                                  location.includes('Colorado') || 
-                                  location.includes('Utah')) {
-                            userTimezone = 'America/Denver';
-                        } else if (location.includes('Los Angeles') || 
-                                  location.includes('California') || 
-                                  location.includes('Washington') || 
-                                  location.includes('Oregon')) {
-                            userTimezone = 'America/Los_Angeles';
+            // Load timezone information - must be loaded before processing posts
+            let timezoneFetchComplete = false;
+            
+            function loadTimezoneInfo() {
+                return fetch('personal_information/information_about_you/profile_based_in.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.inferred_data_primary_location && 
+                            data.inferred_data_primary_location.length > 0 &&
+                            data.inferred_data_primary_location[0].string_map_data &&
+                            data.inferred_data_primary_location[0].string_map_data["City Name"]) {
+                            
+                            const location = data.inferred_data_primary_location[0].string_map_data["City Name"].value;
+                            
+                            // Map common US cities/states to timezones
+                            if (location.includes('New York') || 
+                                location.includes('Virginia') || 
+                                location.includes('Florida') || 
+                                location.includes('Georgia')) {
+                                userTimezone = 'America/New_York';
+                            } else if (location.includes('Chicago') || 
+                                      location.includes('Texas') || 
+                                      location.includes('Illinois')) {
+                                userTimezone = 'America/Chicago';
+                            } else if (location.includes('Denver') || 
+                                      location.includes('Colorado') || 
+                                      location.includes('Utah')) {
+                                userTimezone = 'America/Denver';
+                            } else if (location.includes('Los Angeles') || 
+                                      location.includes('California') || 
+                                      location.includes('Washington') || 
+                                      location.includes('Oregon')) {
+                                userTimezone = 'America/Los_Angeles';
+                            }
+                            
+                            console.log('Detected timezone:', userTimezone, 'based on location:', location);
                         }
-                        
-                        console.log('Detected timezone:', userTimezone, 'based on location:', location);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading timezone information:', error);
-                });
+                        timezoneFetchComplete = true;
+                        return userTimezone;
+                    })
+                    .catch(error => {
+                        console.error('Error loading timezone information:', error);
+                        timezoneFetchComplete = true;
+                        return userTimezone;
+                    });
+            }
+            
+            // Start loading timezone info
+            const timezonePromise = loadTimezoneInfo();
             
             // Load personal information
             fetch('personal_information/personal_information/personal_information.json')
@@ -585,23 +596,28 @@
             // Automatically load the Instagram data from the fixed path
             loadingPosts.style.display = 'block';
             
-            fetch('your_instagram_activity/content/posts_1.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to load Instagram data. Make sure the file exists at your_instagram_activity/content/posts_1.json');
-                    }
-                    return response.json();
-                })
-                .then(jsonData => {
-                    processInstagramData(jsonData);
-                })
-                .catch(error => {
-                    console.error('Error loading JSON:', error);
-                    alert('Error loading Instagram data: ' + error.message);
-                })
-                .finally(() => {
-                    loadingPosts.style.display = 'none';
-                });
+            // Wait for timezone info to load first, then load posts
+            timezonePromise.then(() => {
+                console.log('Loading posts with timezone:', userTimezone);
+                
+                return fetch('your_instagram_activity/content/posts_1.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to load Instagram data. Make sure the file exists at your_instagram_activity/content/posts_1.json');
+                        }
+                        return response.json();
+                    })
+                    .then(jsonData => {
+                        processInstagramData(jsonData);
+                    })
+                    .catch(error => {
+                        console.error('Error loading JSON:', error);
+                        alert('Error loading Instagram data: ' + error.message);
+                    })
+                    .finally(() => {
+                        loadingPosts.style.display = 'none';
+                    });
+            });
             
             function processInstagramData(data) {
                 // Check if data is an array (as expected from the provided excerpt)
@@ -649,7 +665,9 @@
                     const oldestDate = new Date(oldestTimestamp * 1000);
                     const newestDate = new Date(newestTimestamp * 1000);
                     
+                    // Explicitly use formatDate with timezone
                     dateRange.textContent = `${formatDate(oldestDate)} - ${formatDate(newestDate)}`;
+                    console.log(`Date range: ${formatDate(oldestDate)} - ${formatDate(newestDate)} (Timezone: ${userTimezone})`);
                 }
                 
                 // Render posts grid
@@ -1004,6 +1022,9 @@
             
             // Helper functions for formatting dates
             function formatDateTime(date) {
+                // Ensure we're using the correct timezone
+                console.log(`Formatting date: ${date} with timezone: ${userTimezone}`);
+                
                 const options = {
                     year: 'numeric',
                     month: 'long',
@@ -1013,7 +1034,9 @@
                     timeZone: userTimezone
                 };
                 
-                return date.toLocaleString('en-US', options);
+                const formatted = date.toLocaleString('en-US', options);
+                console.log(`Formatted date: ${formatted}`);
+                return formatted;
             }
             
             function formatDate(date) {
