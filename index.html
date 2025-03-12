@@ -589,8 +589,8 @@
                 // Update post count
                 postCount.textContent = posts.length;
                 
-                // Find oldest and newest post dates
-                const timestamps = posts.map(post => post.creation_timestamp || (post.media && post.media[0] && post.media[0].creation_timestamp) || 0);
+                // Find oldest and newest post dates - always use post.creation_timestamp
+                const timestamps = posts.map(post => post.creation_timestamp || 0);
                 const oldestTimestamp = Math.min(...timestamps.filter(t => t > 0));
                 const newestTimestamp = Math.max(...timestamps);
                 
@@ -698,7 +698,10 @@
                 // Get caption from the first media item's title if available
                 const mediaTitle = post.media && post.media.length > 0 ? post.media[0].title : '';
                 postCaption.textContent = post.caption || mediaTitle || post.title || '';
-                postDate.textContent = formatDateTime(new Date(post.creation_timestamp * 1000));
+                
+                // Always use post's creation_timestamp for the date
+                const timestamp = post.creation_timestamp * 1000;
+                postDate.textContent = formatDateTime(new Date(timestamp));
                 
                 // Update profile picture in modal if available
                 const postUserPic = document.getElementById('postUserPic');
