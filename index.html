@@ -615,9 +615,9 @@
                             // Set a placeholder initially
                             profileImg.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">👤</text></svg>';
                         
-                            // Try to load the profile picture with multiple fallback paths
+                            // Try to load the profile picture
                             tryLoadImage(profileImg, profilePicUrl, function() {
-                                // If all attempts fail, keep the placeholder
+                                // If loading fails, keep the placeholder
                                 console.log("Using placeholder for profile picture");
                             });
                         
@@ -744,24 +744,8 @@
                         // For images, create an image element
                         const image = document.createElement('img');
                         
-                        // Get the local path from the uri
-                        const uri = firstMedia.uri;
-                        let imagePath = uri;
-                        
-                        // If it's a relative path to a local file in the export
-                        if (uri && !uri.startsWith('http')) {
-                            // Extract the local path component and make it relative to current page
-                            const parts = uri.split('/');
-                            const fileName = parts[parts.length - 1];
-                            
-                            // Assuming structure like 'media/posts/YYYY/filename'
-                            if (parts.length >= 3) {
-                                const folder = parts[parts.length - 2];
-                                imagePath = `media/${folder}/${fileName}`;
-                            } else {
-                                imagePath = fileName;
-                            }
-                        }
+                        // Use the exact path from the uri
+                        const imagePath = firstMedia.uri;
                         
                         // Set a placeholder image initially
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
@@ -864,26 +848,16 @@
                         const video = document.createElement('video');
                         video.controls = true;
                         
-                        // Get the local path from the uri
-                        let videoPath = media.uri;
-                        if (media.uri && !media.uri.startsWith('http')) {
-                            const parts = media.uri.split('/');
-                            const fileName = parts[parts.length - 1];
-                            if (parts.length >= 3) {
-                                const folder = parts[parts.length - 2];
-                                videoPath = `media/${folder}/${fileName}`;
-                            } else {
-                                videoPath = fileName;
-                            }
-                        }
+                        // Use the exact path from the uri
+                        const videoPath = media.uri;
                         
                         video.src = videoPath;
                         mediaSlide.appendChild(video);
                     } else {
                         const image = document.createElement('img');
                         
-                        // Get the local path from the uri - preserve the full path structure
-                        let imagePath = media.uri;
+                        // Use the exact path from the uri
+                        const imagePath = media.uri;
                         
                         // Set a placeholder initially
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
@@ -1108,7 +1082,7 @@
                 }
             }
             
-            // Helper function to try multiple possible paths for an image
+            // Helper function to load an image with a fallback
             function tryLoadImage(imageElement, originalPath, fallbackCallback) {
                 console.log(`Trying to load image from path: ${originalPath}`);
                 
@@ -1122,81 +1096,10 @@
                 
                 testImg.onerror = function() {
                     console.warn(`Failed to load image: ${originalPath}`);
-                    
-                    // Try alternative paths
-                    const paths = [];
-                    
-                    // Try the original path
-                    paths.push(originalPath);
-                    
-                    // Try without 'media/' prefix if it exists
-                    if (originalPath.startsWith('media/')) {
-                        paths.push(originalPath.substring(6));
-                    }
-                    
-                    // Try just the filename
-                    const parts = originalPath.split('/');
-                    const fileName = parts[parts.length - 1];
-                    paths.push(fileName);
-                    
-                    // Try with different folder structure
-                    if (parts.length >= 3) {
-                        const folder = parts[parts.length - 2];
-                        paths.push(`${folder}/${fileName}`);
-                        paths.push(`media/${folder}/${fileName}`);
-                    }
-                    
-                    // Try with 'posts' folder structure
-                    if (originalPath.includes('posts')) {
-                        const match = originalPath.match(/posts\/(\d+)\/([^\/]+)$/);
-                        if (match) {
-                            const year = match[1];
-                            const file = match[2];
-                            paths.push(`media/posts/${year}/${file}`);
-                            paths.push(`your_instagram_activity/media/posts/${year}/${file}`);
-                        }
-                    }
-                    
-                    // Try with 'other' folder structure
-                    if (originalPath.includes('other')) {
-                        const match = originalPath.match(/other\/([^\/]+)$/);
-                        if (match) {
-                            const file = match[1];
-                            paths.push(`media/other/${file}`);
-                            paths.push(`your_instagram_activity/media/other/${file}`);
-                        }
-                    }
-                    
-                    // Try loading each path
-                    tryNextPath(paths, 0, imageElement, fallbackCallback);
+                    if (fallbackCallback) fallbackCallback();
                 };
                 
                 testImg.src = originalPath;
-            }
-            
-            function tryNextPath(paths, index, imageElement, fallbackCallback) {
-                if (index >= paths.length) {
-                    console.error(`All image loading attempts failed`);
-                    if (fallbackCallback) fallbackCallback();
-                    return;
-                }
-                
-                const path = paths[index];
-                console.log(`Trying alternative path ${index + 1}/${paths.length}: ${path}`);
-                
-                const img = new Image();
-                
-                img.onload = function() {
-                    console.log(`Successfully loaded image from alternative path: ${path}`);
-                    imageElement.src = path;
-                };
-                
-                img.onerror = function() {
-                    console.warn(`Failed to load image from alternative path: ${path}`);
-                    tryNextPath(paths, index + 1, imageElement, fallbackCallback);
-                };
-                
-                img.src = path;
             }
         });
     </script>
