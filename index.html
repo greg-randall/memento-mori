@@ -951,7 +951,7 @@
                         // Set a placeholder initially
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         
-                        console.log(`Trying to load image: ${imagePath}`);
+                        // Image loading is handled by tryLoadImage function
                         
                         // Use the helper function to try multiple paths
                         tryLoadImage(image, imagePath, function() {
@@ -1119,9 +1119,6 @@
             
             // Helper functions for formatting dates
             function formatDateTime(date) {
-                // Ensure we're using the correct timezone
-                console.log(`Formatting date: ${date} with timezone: ${userTimezone}`);
-                
                 const options = {
                     year: 'numeric',
                     month: 'long',
@@ -1132,7 +1129,6 @@
                 };
                 
                 const formatted = date.toLocaleString('en-US', options);
-                console.log(`Formatted date: ${formatted}`);
                 return formatted;
             }
             
@@ -1173,13 +1169,12 @@
             
             // Helper function to load an image with a fallback
             function tryLoadImage(imageElement, originalPath, fallbackCallback) {
-                console.log(`Trying to load image from path: ${originalPath}`);
-                
                 // Create a new Image object to test loading
                 const testImg = new Image();
                 
                 testImg.onload = function() {
-                    console.log(`Successfully loaded image: ${originalPath}`);
+                    // Only log success in debug mode
+                    // console.log(`Successfully loaded image: ${originalPath}`);
                     imageElement.src = originalPath;
                 };
                 
