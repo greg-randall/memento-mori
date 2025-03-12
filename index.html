@@ -1180,10 +1180,50 @@
                 
                 testImg.onerror = function() {
                     console.warn(`Failed to load image: ${originalPath}`);
-                    if (fallbackCallback) fallbackCallback();
+                    
+                    // Try different file extensions
+                    const pathWithoutExt = originalPath.replace(/\.[^/.]+$/, "");
+                    const extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+                    
+                    // If the original path had an extension, add it to the beginning of our list
+                    const originalExt = originalPath.match(/\.[^/.]+$/);
+                    if (originalExt) {
+                        // Remove the extension we just tried from our list if it's there
+                        const extIndex = extensions.indexOf(originalExt[0].toLowerCase());
+                        if (extIndex > -1) {
+                            extensions.splice(extIndex, 1);
+                        }
+                    }
+                    
+                    // Try each extension
+                    tryNextExtension(pathWithoutExt, extensions, 0, imageElement, fallbackCallback);
                 };
                 
                 testImg.src = originalPath;
+            }
+            
+            // Helper function to try loading an image with different extensions
+            function tryNextExtension(pathWithoutExt, extensions, index, imageElement, fallbackCallback) {
+                if (index >= extensions.length) {
+                    // We've tried all extensions, call the fallback
+                    if (fallbackCallback) fallbackCallback();
+                    return;
+                }
+                
+                const pathWithExt = pathWithoutExt + extensions[index];
+                
+                const img = new Image();
+                img.onload = function() {
+                    // Success! Use this image
+                    imageElement.src = pathWithExt;
+                };
+                
+                img.onerror = function() {
+                    // Try the next extension
+                    tryNextExtension(pathWithoutExt, extensions, index + 1, imageElement, fallbackCallback);
+                };
+                
+                img.src = pathWithExt;
             }
         });
     </script>
