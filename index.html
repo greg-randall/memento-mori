@@ -767,45 +767,11 @@
                         image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Loading...</text></svg>';
                         image.alt = 'Instagram post';
                         
-                        console.log(`Trying to load grid image: ${imagePath}`);
-                        
-                        // Create a new Image object to test loading
-                        const testImg = new Image();
-                        testImg.onload = function() {
-                            console.log(`Successfully loaded grid image: ${imagePath}`);
-                            image.src = imagePath;
-                        };
-                        
-                        testImg.onerror = function() {
-                            console.warn(`Failed to load grid image: ${imagePath}`);
-                            // Try a fallback path if the original path doesn't work
-                            if (uri && !uri.startsWith('http')) {
-                                // Try different path formats
-                                const parts = uri.split('/');
-                                const fileName = parts[parts.length - 1];
-                                
-                                // Try just the filename
-                                const fallbackPath = fileName;
-                                console.log(`Trying fallback path for grid: ${fallbackPath}`);
-                                
-                                const fallbackImg = new Image();
-                                fallbackImg.onload = function() {
-                                    console.log(`Successfully loaded fallback grid image: ${fallbackPath}`);
-                                    image.src = fallbackPath;
-                                };
-                                
-                                fallbackImg.onerror = function() {
-                                    console.error(`All grid image loading attempts failed for: ${uri}`);
-                                    image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                                };
-                                
-                                fallbackImg.src = fallbackPath;
-                            } else {
-                                image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                            }
-                        };
-                        
-                        testImg.src = imagePath;
+                        // Use the helper function to try multiple paths
+                        tryLoadImage(image, imagePath, function() {
+                            // If all attempts fail, set a placeholder
+                            image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                        });
                         
                         gridItem.appendChild(image);
                         
@@ -924,43 +890,11 @@
                         
                         console.log(`Trying to load image: ${imagePath}`);
                         
-                        // Create a new Image object to test loading
-                        const testImg = new Image();
-                        testImg.onload = function() {
-                            console.log(`Successfully loaded image: ${imagePath}`);
-                            image.src = imagePath;
-                        };
-                        
-                        testImg.onerror = function() {
-                            console.warn(`Failed to load image in modal: ${imagePath}`);
-                            // Try a fallback path if the original path doesn't work
-                            if (media.uri && !media.uri.startsWith('http')) {
-                                // Try different path formats
-                                const parts = media.uri.split('/');
-                                const fileName = parts[parts.length - 1];
-                                
-                                // Try just the filename
-                                const fallbackPath = fileName;
-                                console.log(`Trying fallback path: ${fallbackPath}`);
-                                
-                                const fallbackImg = new Image();
-                                fallbackImg.onload = function() {
-                                    console.log(`Successfully loaded fallback image: ${fallbackPath}`);
-                                    image.src = fallbackPath;
-                                };
-                                
-                                fallbackImg.onerror = function() {
-                                    console.error(`All image loading attempts failed for: ${media.uri}`);
-                                    image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                                };
-                                
-                                fallbackImg.src = fallbackPath;
-                            } else {
-                                image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
-                            }
-                        };
-                        
-                        testImg.src = imagePath;
+                        // Use the helper function to try multiple paths
+                        tryLoadImage(image, imagePath, function() {
+                            // If all attempts fail, set a placeholder
+                            image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23f0f0f0"/><text x="50%" y="50%" font-family="Arial" font-size="24" text-anchor="middle" fill="%23999">Image</text></svg>';
+                        });
                         
                         image.alt = 'Instagram post';
                         mediaSlide.appendChild(image);
@@ -1209,6 +1143,28 @@
                     if (parts.length >= 3) {
                         const folder = parts[parts.length - 2];
                         paths.push(`${folder}/${fileName}`);
+                        paths.push(`media/${folder}/${fileName}`);
+                    }
+                    
+                    // Try with 'posts' folder structure
+                    if (originalPath.includes('posts')) {
+                        const match = originalPath.match(/posts\/(\d+)\/([^\/]+)$/);
+                        if (match) {
+                            const year = match[1];
+                            const file = match[2];
+                            paths.push(`media/posts/${year}/${file}`);
+                            paths.push(`your_instagram_activity/media/posts/${year}/${file}`);
+                        }
+                    }
+                    
+                    // Try with 'other' folder structure
+                    if (originalPath.includes('other')) {
+                        const match = originalPath.match(/other\/([^\/]+)$/);
+                        if (match) {
+                            const file = match[1];
+                            paths.push(`media/other/${file}`);
+                            paths.push(`your_instagram_activity/media/other/${file}`);
+                        }
                     }
                     
                     // Try loading each path
