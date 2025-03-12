@@ -695,7 +695,9 @@
                 if (!post || !post.media || post.media.length === 0) return;
                 
                 // Update caption and date
-                postCaption.textContent = post.caption || post.title || '';
+                // Get caption from the first media item's title if available
+                const mediaTitle = post.media && post.media.length > 0 ? post.media[0].title : '';
+                postCaption.textContent = post.caption || mediaTitle || post.title || '';
                 postDate.textContent = formatDateTime(new Date(post.creation_timestamp * 1000));
                 
                 // Update profile picture in modal if available
