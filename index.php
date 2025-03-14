@@ -9,13 +9,37 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
     foreach ($post_data as $timestamp => $post) {
         if($i<=$lazy_after){
             $lazy_load = ' loading="lazy"';
+        } else {
+            $lazy_load = '';
         }
         $index = $post['post_index'];
         $media_count = count($post['media']);
-        $first_media = isset($post['media'][0]) ? $post['media'][0] : '';
+        
+        // Determine which media to use for the grid thumbnail
+        $display_media = '';
+        $is_video = false;
+        
+        if (isset($post['media'][0])) {
+            $first_media = $post['media'][0];
+            $display_media = $first_media;
+            
+            // Check if first media is a video
+            $is_video = preg_match('/\.(mp4|mov|avi|webm)$/i', $first_media);
+            
+            // If it's a video and there's a second media item, it might be a thumbnail
+            if ($is_video && isset($post['media'][1]) && 
+                preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $post['media'][1])) {
+                $display_media = $post['media'][1]; // Use the image as thumbnail
+            }
+        }
         
         $output .= '        <div class="grid-item" data-index="' . $index . '">' . "\n";
-        $output .= '          <img src="' . $first_media . '" alt="Instagram post"'.$lazy_load.'>' . "\n";
+        $output .= '          <img src="' . $display_media . '" alt="Instagram post"'.$lazy_load.'>' . "\n";
+        
+        // Add video indicator if it's a video
+        if ($is_video) {
+            $output .= '          <div class="video-indicator">▶</div>' . "\n";
+        }
         
         if ($media_count > 1) {
             $output .= '          <div class="multi-indicator">⊞ ' . $media_count . '</div>' . "\n";
@@ -24,6 +48,7 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
         }
         
         $output .= '        </div>' . "\n";
+        $i++;
     }
     
     return $output;
