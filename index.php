@@ -7,7 +7,7 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
     // Process each post
     $i=1;
     foreach ($post_data as $timestamp => $post) {
-        if($i<=$lazy_after){
+        if($i > $lazy_after){
             $lazy_load = ' loading="lazy"';
         } else {
             $lazy_load = '';
