@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const video = document.createElement('video');
             video.src = mediaUrl;
             video.controls = true;
-            video.autoplay = false;
+            video.autoplay = true;
             video.loop = true;
             video.muted = false;
             video.playsInline = true;
