@@ -30,6 +30,14 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
             if ($is_video && isset($post['media'][1]) && 
                 preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $post['media'][1])) {
                 $display_media = $post['media'][1]; // Use the image as thumbnail
+            } elseif ($is_video) {
+                // For videos without thumbnails, create a placeholder or use a generic thumbnail
+                // We'll use a data URI for a simple play button icon on gray background
+                $display_media = 'data:image/svg+xml;charset=UTF-8,' . 
+                    urlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+                        <rect width="400" height="400" fill="#333333"/>
+                        <polygon points="160,120 160,280 280,200" fill="#ffffff"/>
+                    </svg>');
             }
         }
         

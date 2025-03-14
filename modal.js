@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mediaContainer.className = 'media-container';
         
         // Check if the post has multiple media
-        if (post.media.length > 1) {
+        if (post.media && post.media.length > 1) {
             // Create slides for each media item
             post.media.forEach((mediaUrl, index) => {
                 const slide = document.createElement('div');
