@@ -738,6 +738,11 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         }
       }
     </style>
+    <!-- Script to make post data available to JavaScript -->
+    <script>
+        window.postData = <?php echo json_encode($post_data); ?>;
+    </script>
+    <script src="modal.js"></script>
   </head>
   <body class="vsc-initialized">
     <header>
@@ -787,16 +792,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
             </div>
         </div>
     </div>
-
-    <!-- Script to make post data available to JavaScript -->
-    <script>
-    window.postData = <?php echo json_encode($post_data); ?>;
-    </script>
-
-    <!-- Include the modal JavaScript -->
-    <script src="modal.js"></script>
-
-
   </body>
 </html>
 
