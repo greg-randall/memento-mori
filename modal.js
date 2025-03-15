@@ -51,9 +51,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update modal content
         updateModalContent(post);
         
-        // Show the modal
-        postModal.style.display = 'block';
+        // Show the modal - use flex for mobile, block for desktop
+        if (window.innerWidth <= 768) {
+            postModal.style.display = 'flex';
+        } else {
+            postModal.style.display = 'block';
+        }
+        
         document.body.style.overflow = 'hidden'; // Prevent scrolling
+        
+        // For mobile, ensure content is visible
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 10);
+        }
     }
     //Creates the appropriate media element (video or image) based on the file type
     function createMediaElement(mediaUrl) {
@@ -279,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Keyboard navigation
     document.addEventListener('keydown', function(e) {
-        if (postModal.style.display === 'block') {
+        if (postModal.style.display === 'block' || postModal.style.display === 'flex') {
             if (e.key === 'Escape') {
                 closeModal();
             } else if (e.key === 'ArrowLeft') {

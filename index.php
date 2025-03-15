@@ -664,10 +664,13 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           max-height: none;
           margin: 0;
           border-radius: 0;
+          width: 100%;
         }
 
         .post-media {
           height: 50vh;
+          width: 100%;
+          position: relative;
         }
 
         .post-info {
@@ -684,6 +687,35 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
 
         .stat {
           margin-right: 20px;
+        }
+        
+        .post-modal {
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        
+        .media-container {
+          width: 100%;
+          height: 100%;
+        }
+        
+        .media-slide {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .media-slide img,
+        .media-slide video {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
         }
       }
 
