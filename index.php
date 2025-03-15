@@ -65,7 +65,7 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
         if ($media_count > 1) {
             $output .= '          <div class="multi-indicator">⊞ ' . $media_count . '</div>' . "\n";
         } elseif (isset($post['Likes']) && $post['Likes'] !== '') {
-            $output .= '          <div class="likes-indicator">♥ ' . $post['Likes'] . '</div>' . "\n";
+            $output .= '          <div class="likes-indicator">♥ ' . $post['Likes'] . ' Likes</div>' . "\n";
         }
         
         $output .= '        </div>' . "\n";
@@ -489,11 +489,13 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         bottom: 10px;
         left: 10px;
         color: white;
-        background-color: rgba(0, 0, 0, 0.6);
-        padding: 3px 8px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 4px 10px;
         border-radius: 4px;
         font-size: 12px;
+        font-weight: bold;
         z-index: 2;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
       }
 
       .close-modal {
