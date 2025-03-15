@@ -41,12 +41,15 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
                 
                 // If no thumbnail found, use a better SVG placeholder
                 if (!$found_thumbnail) {
-                    $display_media = 'data:image/svg+xml;utf8,' . 
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
-                            <rect width="400" height="400" fill="#333333"/>
-                            <circle cx="200" cy="200" r="60" fill="#ffffff" fill-opacity="0.8"/>
-                            <polygon points="180,160 180,240 240,200" fill="#333333"/>
-                        </svg>';
+                    // Create a simple SVG with a play button
+                    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">';
+                    $svg .= '<rect width="400" height="400" fill="#333333"/>';
+                    $svg .= '<circle cx="200" cy="200" r="60" fill="#ffffff" fill-opacity="0.8"/>';
+                    $svg .= '<polygon points="180,160 180,240 240,200" fill="#333333"/>';
+                    $svg .= '</svg>';
+                    
+                    // Encode the SVG properly for use in an img src attribute
+                    $display_media = 'data:image/svg+xml;base64,' . base64_encode($svg);
                 }
             }
         }
