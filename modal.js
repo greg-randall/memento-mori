@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show the modal
         postModal.style.display = 'block';
         document.body.style.overflow = 'hidden'; // Prevent scrolling
+        
+        // For mobile devices, scroll to top to ensure content is visible
+        if (window.innerWidth <= 768) {
+            window.scrollTo(0, 0);
+            postModal.scrollTop = 0;
+        }
     }
     //Creates the appropriate media element (video or image) based on the file type
     function createMediaElement(mediaUrl) {

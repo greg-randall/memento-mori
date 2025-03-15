@@ -662,7 +662,7 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           flex-direction: column;
           height: auto;
           max-height: none;
-          margin: 0;
+          margin: 30px auto 0;
           border-radius: 0;
           width: 100%;
         }
@@ -689,7 +689,8 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         }
         
         .post-modal {
-          overflow-y: visible;
+          overflow-y: auto;
+          padding-top: 0;
         }
         
         .media-container {
