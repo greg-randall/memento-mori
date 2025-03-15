@@ -59,7 +59,7 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
         
         // Add video indicator if it's a video
         if ($is_video) {
-            $output .= '          <div class="video-indicator">▶</div>' . "\n";
+            $output .= '          <div class="video-indicator">▶ Video</div>' . "\n";
         }
         
         if ($media_count > 1) {
@@ -372,11 +372,13 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         top: 10px;
         right: 10px;
         color: white;
-        background-color: rgba(0, 0, 0, 0.6);
-        padding: 3px 8px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 4px 10px;
         border-radius: 4px;
         font-size: 12px;
+        font-weight: bold;
         z-index: 2;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
       }
 
       .post-modal {
