@@ -59,6 +59,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.innerWidth <= 768) {
             window.scrollTo(0, 0);
             postModal.scrollTop = 0;
+            
+            // Force layout recalculation to ensure modal content is visible
+            setTimeout(() => {
+                const modalContent = document.querySelector('.post-modal-content');
+                if (modalContent) {
+                    modalContent.style.display = 'none';
+                    // Force a reflow
+                    void modalContent.offsetHeight;
+                    modalContent.style.display = 'flex';
+                }
+            }, 10);
         }
     }
     //Creates the appropriate media element (video or image) based on the file type

@@ -402,6 +402,7 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         max-height: 800px;
         border-radius: 4px;
         overflow: hidden;
+        position: relative;
       }
 
       .post-media {
@@ -670,6 +671,8 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         .post-media {
           height: 50vh;
           width: 100%;
+          min-height: 300px;
+          position: relative;
         }
 
         .post-info {
