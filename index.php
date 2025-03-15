@@ -688,6 +688,10 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           margin-right: 20px;
         }
         
+        .post-modal {
+          overflow-y: visible;
+        }
+        
         .media-container {
           position: relative;
           width: 100%;
