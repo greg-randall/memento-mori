@@ -26,18 +26,28 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
             // Check if first media is a video
             $is_video = preg_match('/\.(mp4|mov|avi|webm)$/i', $first_media);
             
-            // If it's a video and there's a second media item, it might be a thumbnail
-            if ($is_video && isset($post['media'][1]) && 
-                preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $post['media'][1])) {
-                $display_media = $post['media'][1]; // Use the image as thumbnail
-            } elseif ($is_video) {
-                // For videos without thumbnails, create a placeholder or use a generic thumbnail
-                // We'll use a data URI for a simple play button icon on gray background
-                $display_media = 'data:image/svg+xml;charset=UTF-8,' . 
-                    urlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
-                        <rect width="400" height="400" fill="#333333"/>
-                        <polygon points="160,120 160,280 280,200" fill="#ffffff"/>
-                    </svg>');
+            // If it's a video, look for a thumbnail among all media items
+            if ($is_video) {
+                $found_thumbnail = false;
+                
+                // First check if there are any image files in the post's media that could be thumbnails
+                foreach ($post['media'] as $media_item) {
+                    if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $media_item)) {
+                        $display_media = $media_item;
+                        $found_thumbnail = true;
+                        break;
+                    }
+                }
+                
+                // If no thumbnail found, use a better SVG placeholder
+                if (!$found_thumbnail) {
+                    $display_media = 'data:image/svg+xml;charset=UTF-8,' . 
+                        urlencode('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+                            <rect width="400" height="400" fill="#333333"/>
+                            <circle cx="200" cy="200" r="60" fill="#ffffff" fill-opacity="0.8"/>
+                            <polygon points="180,160 180,240 240,200" fill="#333333"/>
+                        </svg>');
+                }
             }
         }
         
