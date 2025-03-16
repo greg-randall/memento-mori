@@ -1,5 +1,11 @@
 <?php
 
+// Start output buffering to capture all HTML output
+ob_start();
+
+// Include distribution helper functions
+require_once('distribution_helper.php');
+
 // Create distribution directory if it doesn't exist
 if (!file_exists('distribution')) {
     mkdir('distribution', 0755, true);
