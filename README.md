@@ -21,6 +21,8 @@ Memento Mori processes your Instagram data export and generates a static site wi
 
 You can also view the site directly in your browser while running the PHP script, as it outputs the HTML content to the browser as well as saving it to the distribution folder.
 
+**DO NOT** share your raw Instagram export online, there's data you probably don't want to share, phone number, precise location data, personal messages, etc!!!
+
 ## Why This Exists
 
 Instagram, like many social platforms, has undergone significant "enshittification" - a term coined to describe how platforms evolve:
