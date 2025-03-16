@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Open the modal with the selected post
   // Replace the openModal function with this updated version
-function openModal(index) {
+function openModal(index, imageIndex = 0) {
     currentPostIndex = index;
     
     // Get the timestamp using the post_index mapping
@@ -54,7 +54,10 @@ function openModal(index) {
     document.body.style.overflow = 'hidden'; // Prevent scrolling
     
     // Update modal content
-    updateModalContent(post);
+    updateModalContent(post, imageIndex);
+    
+    // Update URL with post ID and image index
+    updateUrlWithPostInfo(timestamp, imageIndex);
     
     // For mobile devices, ensure content is visible and properly sized
     if (window.innerWidth <= 768) {
@@ -99,6 +102,25 @@ function openModal(index) {
         }, 50); // Increase timeout for more reliability
     }
 }
+
+// Function to update the URL with post and image information
+function updateUrlWithPostInfo(timestamp, imageIndex) {
+    // Create a new URL object based on the current URL
+    const url = new URL(window.location.href);
+    
+    // Set the post parameter to the timestamp
+    url.searchParams.set('post', timestamp);
+    
+    // Only add the image parameter if it's not the first image
+    if (imageIndex > 0) {
+        url.searchParams.set('image', imageIndex);
+    } else {
+        url.searchParams.delete('image');
+    }
+    
+    // Update the browser history without reloading the page
+    window.history.pushState({}, '', url);
+}
     //Creates the appropriate media element (video or image) based on the file type
     function createMediaElement(mediaUrl) {
         // Check if the media is a video based on file extension
@@ -126,7 +148,7 @@ function openModal(index) {
         }
     }
     // Update the modal content with the post data
-    function updateModalContent(post) {
+    function updateModalContent(post, initialImageIndex = 0) {
         // Clear previous content
         postMedia.innerHTML = '';
         postCaption.innerHTML = '';
@@ -141,7 +163,7 @@ function openModal(index) {
             // Create slides for each media item
             post.media.forEach((mediaUrl, index) => {
                 const slide = document.createElement('div');
-                slide.className = `media-slide ${index === 0 ? 'active' : ''}`;
+                slide.className = `media-slide ${index === initialImageIndex ? 'active' : ''}`;
                 
                 // Create and add the appropriate media element
                 const mediaElement = createMediaElement(mediaUrl);
@@ -173,7 +195,7 @@ function openModal(index) {
             
             for (let i = 0; i < post.media.length; i++) {
                 const dot = document.createElement('div');
-                dot.className = `slideshow-dot ${i === 0 ? 'active' : ''}`;
+                dot.className = `slideshow-dot ${i === initialImageIndex ? 'active' : ''}`;
                 dot.setAttribute('data-index', i);
                 dot.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -186,6 +208,9 @@ function openModal(index) {
             mediaContainer.appendChild(prevBtn);
             mediaContainer.appendChild(nextBtn);
             mediaContainer.appendChild(indicator);
+            
+            // Set the current slide index to the initial image index
+            currentSlideIndex = initialImageIndex;
         } else {
             // Single media post
             const slide = document.createElement('div');
@@ -277,6 +302,13 @@ function openModal(index) {
         
         // Add active class to the selected slide
         slides[index].classList.add('active');
+        
+        // Update current slide index
+        currentSlideIndex = index;
+        
+        // Update URL with the new image index
+        const timestamp = postIndexToTimestamp[currentPostIndex];
+        updateUrlWithPostInfo(timestamp, index);
     }
     
     // Navigate between posts (next/prev buttons in modal)
@@ -301,6 +333,12 @@ function openModal(index) {
     function closeModal() {
         postModal.style.display = 'none';
         document.body.style.overflow = 'auto'; // Re-enable scrolling
+        
+        // Remove post and image parameters from URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('post');
+        url.searchParams.delete('image');
+        window.history.pushState({}, '', url);
     }
     
     // Event listeners for modal navigation
@@ -337,6 +375,28 @@ function openModal(index) {
     // Initialize the modal functionality
     if (typeof window.postData !== 'undefined') {
         initialize();
+        
+        // Check if URL has post and image parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const postTimestamp = urlParams.get('post');
+        const imageIndex = parseInt(urlParams.get('image') || '0');
+        
+        if (postTimestamp && window.postData[postTimestamp]) {
+            // Find the post index from the timestamp
+            let postIndex = -1;
+            Object.entries(postIndexToTimestamp).forEach(([index, timestamp]) => {
+                if (timestamp === postTimestamp) {
+                    postIndex = parseInt(index);
+                }
+            });
+            
+            if (postIndex >= 0) {
+                // Open the modal with the specified post and image
+                setTimeout(() => {
+                    openModal(postIndex, imageIndex);
+                }, 500); // Delay to ensure everything is loaded
+            }
+        }
     } else {
         console.error('Post data not available');
     }
