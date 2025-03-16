@@ -1,5 +1,9 @@
 <?php
 
+// Create distribution directory if it doesn't exist
+if (!file_exists('distribution')) {
+    mkdir('distribution', 0755, true);
+}
 
 function render_instagram_grid($post_data, $lazy_after = 30) {
     $output = '';
@@ -845,7 +849,12 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
                 });
         }
     </script>
-    <script src="modal.js"></script>
+    <?php
+    // Include the modal.js content directly in the output
+    echo '<script>';
+    echo file_get_contents('modal.js');
+    echo '</script>';
+    ?>
   </head>
   <body class="vsc-initialized">
     <header>
@@ -904,4 +913,25 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
   </body>
 </html>
 
+<?php
+// Generate the static HTML file
+$html_content = ob_get_contents();
+ob_end_clean();
+
+// Write the HTML to the distribution folder
+file_put_contents('distribution/index.html', $html_content);
+
+// Copy media files to the distribution folder
+copy_media_files($post_data, $profile_picture);
+
+// Copy any other necessary files
+copy_css_files();
+copy_js_files();
+
+echo "Static site generated in the 'distribution' folder.\n";
+echo "You can view it by opening distribution/index.html in your browser.\n";
+
+// Output the content to the browser as well
+echo $html_content;
+?>
 
