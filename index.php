@@ -930,9 +930,7 @@ file_put_contents('distribution/index.html', $html_content);
 // Copy media files to the distribution folder
 copy_media_files($post_data, $profile_picture);
 
-// Copy any other necessary files
-copy_css_files();
-copy_js_files();
+// No need to copy CSS or JS files as they are embedded in the HTML
 
 echo "Static site generated in the 'distribution' folder.\n";
 echo "You can view it by opening distribution/index.html in your browser.\n";

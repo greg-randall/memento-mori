@@ -64,18 +64,14 @@ function copy_file_to_distribution($file_path) {
 }
 
 /**
- * Copy CSS files to the distribution folder
+ * These functions are not needed as all CSS and JS is embedded in the HTML
  */
 function copy_css_files() {
-    // If you have separate CSS files, copy them here
-    // For now, CSS is embedded in the HTML
+    // CSS is embedded in the HTML
 }
 
-/**
- * Copy JavaScript files to the distribution folder
- */
 function copy_js_files() {
-    // If you have separate JS files (other than modal.js which is embedded), copy them here
+    // JS is embedded in the HTML
 }
 
 ?>
