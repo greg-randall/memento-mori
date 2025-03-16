@@ -39,39 +39,66 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Open the modal with the selected post
-    function openModal(index) {
-        currentPostIndex = index;
+  // Replace the openModal function with this updated version
+function openModal(index) {
+    currentPostIndex = index;
+    
+    // Get the timestamp using the post_index mapping
+    const timestamp = postIndexToTimestamp[index];
+    
+    // Get the post data using the timestamp
+    const post = window.postData[timestamp];
+    
+    // Show the modal first (important for correct dimensions)
+    postModal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+    
+    // Update modal content
+    updateModalContent(post);
+    
+    // For mobile devices, ensure content is visible and properly sized
+    if (window.innerWidth <= 768) {
+        window.scrollTo(0, 0);
+        postModal.scrollTop = 0;
         
-        // Get the timestamp using the post_index mapping
-        const timestamp = postIndexToTimestamp[index];
-        
-        // Get the post data using the timestamp
-        const post = window.postData[timestamp];
-        
-        // Update modal content
-        updateModalContent(post);
-        
-        // Show the modal
-        postModal.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent scrolling
-        
-        // For mobile devices, scroll to top to ensure content is visible
-        if (window.innerWidth <= 768) {
-            window.scrollTo(0, 0);
-            postModal.scrollTop = 0;
+        // Force layout recalculation with a longer timeout
+        setTimeout(() => {
+            const mediaContainer = document.querySelector('.media-container');
+            const postMediaEl = document.getElementById('postMedia');
             
-            // Force layout recalculation to ensure modal content is visible
-            setTimeout(() => {
-                const modalContent = document.querySelector('.post-modal-content');
-                if (modalContent) {
-                    modalContent.style.display = 'none';
-                    // Force a reflow
-                    void modalContent.offsetHeight;
-                    modalContent.style.display = 'flex';
+            // Ensure post-media has explicit height
+            if (postMediaEl) {
+                postMediaEl.style.height = '50vh';
+                postMediaEl.style.minHeight = '300px';
+            }
+            
+            // Ensure media-container has explicit height
+            if (mediaContainer) {
+                mediaContainer.style.height = '100%';
+                mediaContainer.style.display = 'flex';
+                
+                // Force reflow
+                void mediaContainer.offsetHeight;
+            }
+            
+            // Reset any active slides to ensure they're visible
+            const activeSlides = document.querySelectorAll('.media-slide.active');
+            activeSlides.forEach(slide => {
+                slide.style.opacity = '0';
+                void slide.offsetHeight; // Force reflow
+                slide.style.opacity = '1';
+                
+                // Make sure images have height
+                const img = slide.querySelector('img');
+                if (img) {
+                    img.style.maxHeight = '100%';
+                    img.style.width = 'auto';
+                    img.style.height = 'auto';
                 }
-            }, 10);
-        }
+            });
+        }, 50); // Increase timeout for more reliability
     }
+}
     //Creates the appropriate media element (video or image) based on the file type
     function createMediaElement(mediaUrl) {
         // Check if the media is a video based on file extension

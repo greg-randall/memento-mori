@@ -741,6 +741,72 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           justify-content: center;
         }
       }
+
+      /* Add these styles to your existing CSS */
+
+@media (max-width: 768px) {
+  /* Ensure the modal takes up the full screen */
+  .post-modal {
+    padding: 0;
+    overflow-y: auto;
+  }
+  
+  /* Make modal content take full width */
+  .post-modal-content {
+    flex-direction: column;
+    height: auto;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Explicitly set post-media height */
+  .post-media {
+    height: 50vh !important; /* Important to override any inline styles */
+    min-height: 300px !important;
+    width: 100%;
+    flex: 0 0 auto; /* Don't grow or shrink */
+  }
+  
+  /* Ensure media container fills the available space */
+  .media-container {
+    position: relative;
+    width: 100%;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Fix media slides */
+  .media-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Ensure images don't exceed container */
+  .media-slide img,
+  .media-slide video {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  
+  /* Make post info section scroll independently if needed */
+  .post-info {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    max-height: 50vh;
+  }
+}
     </style>
     <!-- Script to make post data available to JavaScript -->
     <script>
