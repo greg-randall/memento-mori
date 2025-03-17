@@ -475,17 +475,23 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
             }
         });
         
-        // Get all post indexes in sorted order
-        const postIndexes = Object.keys(postIndexToTimestamp).map(Number).sort((a, b) => a - b);
+        // Get all grid items in their current sorted order
+        const gridItems = Array.from(document.querySelectorAll('.grid-item'));
+        const gridIndexes = gridItems.map(item => parseInt(item.getAttribute('data-index')));
         
-        // Find current index position in the array
-        const currentPosition = postIndexes.indexOf(currentPostIndex);
+        // Find the position of the current post in the sorted grid
+        const currentPosition = gridIndexes.indexOf(currentPostIndex);
+        
+        if (currentPosition === -1) {
+            console.error('Current post not found in grid');
+            return;
+        }
         
         // Calculate new position with wraparound
-        let newPosition = (currentPosition + direction + postIndexes.length) % postIndexes.length;
+        let newPosition = (currentPosition + direction + gridIndexes.length) % gridIndexes.length;
         
-        // Get the new post index
-        const newPostIndex = postIndexes[newPosition];
+        // Get the new post index from the grid's current order
+        const newPostIndex = gridIndexes[newPosition];
         
         // Open the new post
         openModal(newPostIndex);
