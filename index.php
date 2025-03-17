@@ -764,6 +764,8 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         justify-content: center;
         flex-wrap: wrap;
         margin: 5px 0;
+        width: 100%;
+        max-width: 600px;
       }
       
       .sort-link {
@@ -900,13 +902,14 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         
         .sort-row {
           width: 100%;
-          justify-content: space-around;
+          justify-content: center;
         }
         
         .sort-link {
-          margin: 0 3px;
+          margin: 0 10px;
           font-size: 13px;
           padding: 5px 0;
+          flex: 0 0 auto;
         }
       }
 
