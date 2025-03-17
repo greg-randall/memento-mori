@@ -279,6 +279,12 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
             }
         });
         
+        // Pause any videos in the current slide
+        const currentVideo = slides[activeIndex].querySelector('video');
+        if (currentVideo) {
+            currentVideo.pause();
+        }
+        
         // Calculate the new index
         let newIndex = activeIndex + direction;
         if (newIndex < 0) newIndex = slides.length - 1;
@@ -292,6 +298,14 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
     function showSlide(index) {
         const slides = document.querySelectorAll('.media-slide');
         const dots = document.querySelectorAll('.slideshow-dot');
+        
+        // Pause all videos before changing slides
+        slides.forEach(slide => {
+            const video = slide.querySelector('video');
+            if (video) {
+                video.pause();
+            }
+        });
         
         // Remove active class from all slides and dots
         slides.forEach(slide => slide.classList.remove('active'));
@@ -313,6 +327,14 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
     
     // Navigate between posts (next/prev buttons in modal)
     function navigatePost(direction) {
+        // Pause all videos in the current post
+        const videos = document.querySelectorAll('.media-slide video');
+        videos.forEach(video => {
+            if (video) {
+                video.pause();
+            }
+        });
+        
         // Get all post indexes in sorted order
         const postIndexes = Object.keys(postIndexToTimestamp).map(Number).sort((a, b) => a - b);
         
@@ -331,6 +353,14 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
     
     // Close the modal
     function closeModal() {
+        // Pause all videos before closing the modal
+        const videos = document.querySelectorAll('.media-slide video');
+        videos.forEach(video => {
+            if (video) {
+                video.pause();
+            }
+        });
+        
         postModal.style.display = 'none';
         document.body.style.overflow = 'auto'; // Re-enable scrolling
         
