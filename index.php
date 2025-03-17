@@ -351,6 +351,12 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         color: var(--instagram-text);
         text-decoration: none;
       }
+      
+      .date-range-header {
+        color: #8e8e8e;
+        font-size: 14px;
+        margin-left: 15px;
+      }
 
       main {
         max-width: 975px;
@@ -868,6 +874,18 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           justify-content: center;
         }
         
+        .header-content {
+          flex-direction: column;
+          align-items: center;
+          padding: 5px 0;
+        }
+        
+        .date-range-header {
+          margin-left: 0;
+          margin-top: 2px;
+          font-size: 12px;
+        }
+        
         .sort-options {
           padding: 10px 5px;
         }
@@ -972,6 +990,7 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
     <header>
       <div class="header-content">
         <a href="https://github.com/greg-randall/memento-mori" class="logo">Memento Mori</a>
+        <div class="date-range-header" id="date-range-header"><?php echo "$first_timestamp - $last_timestamp"; ?></div>
       </div>
     </header>
     <main>
@@ -987,7 +1006,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
               <span class="stat-count" id="post-count"><?php echo count($post_data); ?></span> posts
             </div>
           </div>
-          <div id="date-range"><?php echo "$first_timestamp - $last_timestamp"; ?></div>
         </div>
       </div>
       <div class="sort-options">
