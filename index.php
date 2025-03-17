@@ -749,16 +749,7 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         justify-content: center;
         flex-wrap: wrap;
         padding: 10px 20px;
-        background-color: white;
-        border: 1px solid var(--instagram-border);
-        border-radius: 4px;
         margin-bottom: 20px;
-      }
-      
-      .sort-label {
-        margin-right: 15px;
-        font-weight: 600;
-        color: #8e8e8e;
       }
       
       .sort-link {
@@ -881,9 +872,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           padding: 10px 5px;
         }
         
-        .sort-label {
-          display: none;
-        }
         
         .sort-link {
           margin: 0 5px;
@@ -1003,7 +991,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         </div>
       </div>
       <div class="sort-options">
-        <span class="sort-label">Sort by:</span>
         <a href="#" class="sort-link active" data-sort="newest">Newest</a>
         <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
         <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
