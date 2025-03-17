@@ -750,7 +750,8 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         flex-wrap: wrap;
         padding: 10px 20px;
         background-color: white;
-        border-bottom: 1px solid var(--instagram-border);
+        border: 1px solid var(--instagram-border);
+        border-radius: 4px;
         margin-bottom: 20px;
       }
       
@@ -984,15 +985,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
       <div class="header-content">
         <a href="https://github.com/greg-randall/memento-mori" class="logo">Memento Mori</a>
       </div>
-      <div class="sort-options">
-        <span class="sort-label">Sort by:</span>
-        <a href="#" class="sort-link active" data-sort="newest">Newest</a>
-        <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
-        <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
-        <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
-        <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
-        <a href="#" class="sort-link" data-sort="random">Random</a>
-      </div>
     </header>
     <main>
       <div class="loading" id="loadingPosts" style="display: none;"> Loading posts... </div>
@@ -1009,6 +1001,15 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           </div>
           <div id="date-range"><?php echo "$first_timestamp - $last_timestamp"; ?></div>
         </div>
+      </div>
+      <div class="sort-options">
+        <span class="sort-label">Sort by:</span>
+        <a href="#" class="sort-link active" data-sort="newest">Newest</a>
+        <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
+        <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
+        <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
+        <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
+        <a href="#" class="sort-link" data-sort="random">Random</a>
       </div>
       <div class="posts-grid" id="postsGrid">
         <?php echo render_instagram_grid($post_data); ?>
