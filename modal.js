@@ -11,10 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const postDate = document.getElementById('postDate');
     const postUsername = document.getElementById('postUsername');
     const postUserPic = document.getElementById('postUserPic');
+    const sortLinks = document.querySelectorAll('.sort-link');
     
     // Global variables to track current post and indexes
     let currentPostIndex = -1;
+    let currentSlideIndex = 0;
     let postIndexToTimestamp = {}; // Map post index to timestamp
+    let currentSortType = 'newest'; // Default sort
     
     // Initialize by creating mapping and attaching listeners
     function initialize() {
@@ -25,6 +28,143 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Attach click listeners to grid items
         attachGridItemListeners();
+        
+        // Initialize sorting functionality
+        initializeSorting();
+    }
+    
+    // Initialize sorting functionality
+    function initializeSorting() {
+        // Add event listeners to sort links
+        sortLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active class
+                sortLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Get sort type and sort posts
+                const sortType = this.getAttribute('data-sort');
+                currentSortType = sortType;
+                sortPosts(sortType);
+            });
+        });
+    }
+    
+    // Sort posts based on selected criteria
+    function sortPosts(sortType) {
+        // Get all grid items
+        let gridItems = Array.from(document.querySelectorAll('.grid-item'));
+        
+        // Sort the grid items based on the selected criteria
+        switch(sortType) {
+            case 'newest':
+                // Sort by timestamp (newest first) - this is the default
+                gridItems.sort((a, b) => {
+                    const indexA = parseInt(a.getAttribute('data-index'));
+                    const indexB = parseInt(b.getAttribute('data-index'));
+                    const timestampA = getTimestampByIndex(indexA);
+                    const timestampB = getTimestampByIndex(indexB);
+                    return timestampB - timestampA;
+                });
+                break;
+                
+            case 'oldest':
+                // Sort by timestamp (oldest first)
+                gridItems.sort((a, b) => {
+                    const indexA = parseInt(a.getAttribute('data-index'));
+                    const indexB = parseInt(b.getAttribute('data-index'));
+                    const timestampA = getTimestampByIndex(indexA);
+                    const timestampB = getTimestampByIndex(indexB);
+                    return timestampA - timestampB;
+                });
+                break;
+                
+            case 'most-likes':
+                // Sort by number of likes
+                gridItems.sort((a, b) => {
+                    const indexA = parseInt(a.getAttribute('data-index'));
+                    const indexB = parseInt(b.getAttribute('data-index'));
+                    const likesA = getLikesByIndex(indexA) || 0;
+                    const likesB = getLikesByIndex(indexB) || 0;
+                    return likesB - likesA;
+                });
+                break;
+                
+            case 'most-comments':
+                // Sort by number of comments
+                gridItems.sort((a, b) => {
+                    const indexA = parseInt(a.getAttribute('data-index'));
+                    const indexB = parseInt(b.getAttribute('data-index'));
+                    const commentsA = getCommentsByIndex(indexA) || 0;
+                    const commentsB = getCommentsByIndex(indexB) || 0;
+                    return commentsB - commentsA;
+                });
+                break;
+                
+            case 'most-views':
+                // Sort by number of views/impressions
+                gridItems.sort((a, b) => {
+                    const indexA = parseInt(a.getAttribute('data-index'));
+                    const indexB = parseInt(b.getAttribute('data-index'));
+                    const viewsA = getViewsByIndex(indexA) || 0;
+                    const viewsB = getViewsByIndex(indexB) || 0;
+                    return viewsB - viewsA;
+                });
+                break;
+                
+            case 'random':
+                // Shuffle the grid items randomly
+                gridItems.sort(() => Math.random() - 0.5);
+                break;
+        }
+        
+        // Reorder the grid items in the DOM
+        const fragment = document.createDocumentFragment();
+        gridItems.forEach(item => {
+            fragment.appendChild(item);
+        });
+        
+        // Clear the grid and append the sorted items
+        postsGrid.innerHTML = '';
+        postsGrid.appendChild(fragment);
+        
+        // Reattach event listeners to grid items
+        attachGridItemListeners();
+    }
+    
+    // Helper function to get timestamp by post index
+    function getTimestampByIndex(index) {
+        const timestamp = postIndexToTimestamp[index];
+        return parseInt(timestamp);
+    }
+    
+    // Helper function to get likes by post index
+    function getLikesByIndex(index) {
+        const timestamp = postIndexToTimestamp[index];
+        if (timestamp && window.postData[timestamp]) {
+            return parseInt(window.postData[timestamp].Likes) || 0;
+        }
+        return 0;
+    }
+    
+    // Helper function to get comments by post index
+    function getCommentsByIndex(index) {
+        const timestamp = postIndexToTimestamp[index];
+        if (timestamp && window.postData[timestamp]) {
+            return parseInt(window.postData[timestamp].Comments) || 0;
+        }
+        return 0;
+    }
+    
+    // Helper function to get views/impressions by post index
+    function getViewsByIndex(index) {
+        const timestamp = postIndexToTimestamp[index];
+        if (timestamp && window.postData[timestamp]) {
+            return parseInt(window.postData[timestamp].Impressions) || 0;
+        }
+        return 0;
     }
     
     // Attach click event listeners to all grid items

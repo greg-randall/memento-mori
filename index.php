@@ -742,6 +742,51 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         padding: 40px;
         font-size: 18px;
       }
+      
+      .sort-options {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 10px 20px;
+        background-color: white;
+        border-bottom: 1px solid var(--instagram-border);
+        margin-bottom: 20px;
+      }
+      
+      .sort-label {
+        margin-right: 15px;
+        font-weight: 600;
+        color: #8e8e8e;
+      }
+      
+      .sort-link {
+        margin: 0 10px;
+        color: var(--instagram-text);
+        text-decoration: none;
+        padding: 5px 0;
+        position: relative;
+        transition: color 0.2s;
+      }
+      
+      .sort-link:hover {
+        color: var(--instagram-link);
+      }
+      
+      .sort-link.active {
+        color: var(--instagram-link);
+        font-weight: 600;
+      }
+      
+      .sort-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: var(--instagram-link);
+      }
 
       @media (max-width: 768px) {
         .posts-grid {
@@ -829,6 +874,19 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
 
         .stats {
           justify-content: center;
+        }
+        
+        .sort-options {
+          padding: 10px 5px;
+        }
+        
+        .sort-label {
+          display: none;
+        }
+        
+        .sort-link {
+          margin: 0 5px;
+          font-size: 13px;
         }
       }
 
@@ -925,6 +983,15 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
     <header>
       <div class="header-content">
         <a href="https://github.com/greg-randall/memento-mori" class="logo">Memento Mori</a>
+      </div>
+      <div class="sort-options">
+        <span class="sort-label">Sort by:</span>
+        <a href="#" class="sort-link active" data-sort="newest">Newest</a>
+        <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
+        <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
+        <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
+        <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
+        <a href="#" class="sort-link" data-sort="random">Random</a>
       </div>
     </header>
     <main>
