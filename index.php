@@ -751,7 +751,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
       
       .sort-options {
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 10px 20px;
@@ -902,11 +901,12 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         
         .sort-row {
           width: 100%;
+          flex-wrap: wrap;
           justify-content: center;
         }
         
         .sort-link {
-          margin: 0 10px;
+          margin: 5px;
           font-size: 13px;
           padding: 5px 0;
           flex: 0 0 auto;
@@ -1029,8 +1029,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
           <a href="#" class="sort-link active" data-sort="newest">Newest</a>
           <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
           <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
-        </div>
-        <div class="sort-row">
           <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
           <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
           <a href="#" class="sort-link" data-sort="random">Random</a>
