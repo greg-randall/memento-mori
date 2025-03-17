@@ -751,11 +751,19 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
       
       .sort-options {
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 20px;
+        margin-bottom: 20px;
+      }
+      
+      .sort-row {
+        display: flex;
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
-        padding: 10px 20px;
-        margin-bottom: 20px;
+        margin: 5px 0;
       }
       
       .sort-link {
@@ -887,13 +895,18 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         }
         
         .sort-options {
-          padding: 10px 5px;
+          padding: 5px;
         }
         
+        .sort-row {
+          width: 100%;
+          justify-content: space-around;
+        }
         
         .sort-link {
-          margin: 0 5px;
+          margin: 0 3px;
           font-size: 13px;
+          padding: 5px 0;
         }
       }
 
@@ -1009,12 +1022,16 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         </div>
       </div>
       <div class="sort-options">
-        <a href="#" class="sort-link active" data-sort="newest">Newest</a>
-        <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
-        <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
-        <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
-        <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
-        <a href="#" class="sort-link" data-sort="random">Random</a>
+        <div class="sort-row">
+          <a href="#" class="sort-link active" data-sort="newest">Newest</a>
+          <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
+          <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
+        </div>
+        <div class="sort-row">
+          <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
+          <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
+          <a href="#" class="sort-link" data-sort="random">Random</a>
+        </div>
       </div>
       <div class="posts-grid" id="postsGrid">
         <?php echo render_instagram_grid($post_data); ?>
