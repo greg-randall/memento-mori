@@ -117,10 +117,6 @@ function generate_thumbnail($source_path, $relative_path) {
         return $thumb_path;
     }
     
-    // Determine file type
-    $file_extension = strtolower(pathinfo($source_path, PATHINFO_EXTENSION));
-    $is_video = in_array($file_extension, ['mp4', 'mov', 'avi', 'webm']);
-    
     // Target dimensions
     $target_width = 292;
     $target_height = 292;
@@ -128,6 +124,31 @@ function generate_thumbnail($source_path, $relative_path) {
     fwrite(STDERR, "Generating thumbnail for: $relative_path\n");
     
     try {
+        // Check if file exists
+        if (!file_exists($source_path)) {
+            fwrite(STDERR, "File not found: $source_path\n");
+            return null;
+        }
+        
+        // Detect file type by examining file contents
+        $file_info = new finfo(FILEINFO_MIME_TYPE);
+        $mime_type = $file_info->file($source_path);
+        
+        // Determine if it's a video based on mime type
+        $is_video = (strpos($mime_type, 'video/') === 0);
+        
+        // For HEIC files (often incorrectly labeled)
+        $is_heic = false;
+        if (strpos($mime_type, 'application/octet-stream') === 0) {
+            // Check for HEIC signature
+            $file_header = file_get_contents($source_path, false, null, 0, 12);
+            if (strpos($file_header, 'ftypheic') !== false || 
+                strpos($file_header, 'ftypmif1') !== false || 
+                strpos($file_header, 'ftyphevc') !== false) {
+                $is_heic = true;
+            }
+        }
+        
         if ($is_video) {
             // For videos, try to use FFmpeg to extract a frame
             if (function_exists('exec')) {
@@ -153,6 +174,35 @@ function generate_thumbnail($source_path, $relative_path) {
             // If FFmpeg fails or is not available, use a placeholder
             fwrite(STDERR, "Could not generate video thumbnail for: $relative_path\n");
             return null;
+        } else if ($is_heic) {
+            // For HEIC files, try to use ImageMagick if available
+            if (function_exists('exec')) {
+                $temp_jpg = tempnam(sys_get_temp_dir(), 'thumb') . '.jpg';
+                exec("convert \"$source_path\" \"$temp_jpg\" 2>&1", $output, $return_var);
+                
+                if ($return_var !== 0) {
+                    fwrite(STDERR, "ImageMagick error for HEIC: " . implode("\n", $output) . "\n");
+                    return null;
+                }
+                
+                // Now process the converted JPG
+                if (file_exists($temp_jpg)) {
+                    $source_image = imagecreatefromjpeg($temp_jpg);
+                    if (!$source_image) {
+                        fwrite(STDERR, "Failed to create image from converted HEIC: $relative_path\n");
+                        unlink($temp_jpg);
+                        return null;
+                    }
+                    
+                    // Process the image (resize and save as WebP)
+                    $result = process_and_save_image($source_image, $thumb_path, $target_width, $target_height);
+                    unlink($temp_jpg); // Clean up temp file
+                    return $result;
+                }
+            }
+            
+            fwrite(STDERR, "Could not convert HEIC file: $relative_path\n");
+            return null;
         } else {
             // For images, use GD library
             if (!function_exists('imagecreatefromjpeg') || !function_exists('imagewebp')) {
@@ -160,86 +210,43 @@ function generate_thumbnail($source_path, $relative_path) {
                 return null;
             }
             
-            // Create image resource based on file type
+            // Create image resource based on mime type
             $source_image = null;
-            switch ($file_extension) {
-                case 'jpg':
-                case 'jpeg':
-                    $source_image = imagecreatefromjpeg($source_path);
+            
+            switch ($mime_type) {
+                case 'image/jpeg':
+                    $source_image = @imagecreatefromjpeg($source_path);
                     break;
-                case 'png':
-                    $source_image = imagecreatefrompng($source_path);
+                case 'image/png':
+                    $source_image = @imagecreatefrompng($source_path);
                     break;
-                case 'gif':
-                    $source_image = imagecreatefromgif($source_path);
+                case 'image/gif':
+                    $source_image = @imagecreatefromgif($source_path);
                     break;
-                case 'webp':
-                    $source_image = imagecreatefromwebp($source_path);
+                case 'image/webp':
+                    $source_image = @imagecreatefromwebp($source_path);
                     break;
                 default:
-                    fwrite(STDERR, "Unsupported image format: $file_extension\n");
-                    return null;
+                    // Try to load as JPEG first, then PNG, then GIF as fallbacks
+                    $source_image = @imagecreatefromjpeg($source_path);
+                    if (!$source_image) {
+                        $source_image = @imagecreatefrompng($source_path);
+                    }
+                    if (!$source_image) {
+                        $source_image = @imagecreatefromgif($source_path);
+                    }
+                    if (!$source_image) {
+                        $source_image = @imagecreatefromwebp($source_path);
+                    }
+                    break;
             }
             
             if (!$source_image) {
-                fwrite(STDERR, "Failed to create image resource for: $relative_path\n");
+                fwrite(STDERR, "Failed to create image resource for: $relative_path (MIME: $mime_type)\n");
                 return null;
             }
             
-            // Get original dimensions
-            $original_width = imagesx($source_image);
-            $original_height = imagesy($source_image);
-            
-            // Calculate new dimensions while maintaining aspect ratio
-            if ($original_width > $original_height) {
-                $new_width = $target_width;
-                $new_height = intval($original_height * ($target_width / $original_width));
-            } else {
-                $new_height = $target_height;
-                $new_width = intval($original_width * ($target_height / $original_height));
-            }
-            
-            // Create a new image with the calculated dimensions
-            $new_image = imagecreatetruecolor($new_width, $new_height);
-            
-            // Preserve transparency for PNG images
-            if ($file_extension === 'png') {
-                imagealphablending($new_image, false);
-                imagesavealpha($new_image, true);
-                $transparent = imagecolorallocatealpha($new_image, 255, 255, 255, 127);
-                imagefilledrectangle($new_image, 0, 0, $new_width, $new_height, $transparent);
-            }
-            
-            // Resize the image
-            imagecopyresampled(
-                $new_image, $source_image,
-                0, 0, 0, 0,
-                $new_width, $new_height, $original_width, $original_height
-            );
-            
-            // Create the final square thumbnail with padding
-            $thumb_image = imagecreatetruecolor($target_width, $target_height);
-            
-            // Fill with white background
-            $white = imagecolorallocate($thumb_image, 255, 255, 255);
-            imagefilledrectangle($thumb_image, 0, 0, $target_width, $target_height, $white);
-            
-            // Calculate position to center the resized image
-            $x = ($target_width - $new_width) / 2;
-            $y = ($target_height - $new_height) / 2;
-            
-            // Copy the resized image onto the square thumbnail
-            imagecopy($thumb_image, $new_image, $x, $y, 0, 0, $new_width, $new_height);
-            
-            // Save as WebP
-            imagewebp($thumb_image, $thumb_path, 80);
-            
-            // Clean up
-            imagedestroy($source_image);
-            imagedestroy($new_image);
-            imagedestroy($thumb_image);
-            
-            return $thumb_path;
+            return process_and_save_image($source_image, $thumb_path, $target_width, $target_height);
         }
     } catch (Exception $e) {
         fwrite(STDERR, "Error generating thumbnail: " . $e->getMessage() . "\n");
@@ -247,6 +254,75 @@ function generate_thumbnail($source_path, $relative_path) {
     }
     
     return null;
+}
+
+/**
+ * Process an image resource and save it as a WebP thumbnail
+ * 
+ * @param resource $source_image The source image resource
+ * @param string $thumb_path The path to save the thumbnail
+ * @param int $target_width The target width
+ * @param int $target_height The target height
+ * @return string|null The path to the generated thumbnail or null if failed
+ */
+function process_and_save_image($source_image, $thumb_path, $target_width, $target_height) {
+    try {
+        // Get original dimensions
+        $original_width = imagesx($source_image);
+        $original_height = imagesy($source_image);
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        if ($original_width > $original_height) {
+            $new_width = $target_width;
+            $new_height = intval($original_height * ($target_width / $original_width));
+        } else {
+            $new_height = $target_height;
+            $new_width = intval($original_width * ($target_height / $original_height));
+        }
+        
+        // Create a new image with the calculated dimensions
+        $new_image = imagecreatetruecolor($new_width, $new_height);
+        
+        // Preserve transparency
+        imagealphablending($new_image, false);
+        imagesavealpha($new_image, true);
+        $transparent = imagecolorallocatealpha($new_image, 255, 255, 255, 127);
+        imagefilledrectangle($new_image, 0, 0, $new_width, $new_height, $transparent);
+        
+        // Resize the image
+        imagecopyresampled(
+            $new_image, $source_image,
+            0, 0, 0, 0,
+            $new_width, $new_height, $original_width, $original_height
+        );
+        
+        // Create the final square thumbnail with padding
+        $thumb_image = imagecreatetruecolor($target_width, $target_height);
+        
+        // Fill with white background
+        $white = imagecolorallocate($thumb_image, 255, 255, 255);
+        imagefilledrectangle($thumb_image, 0, 0, $target_width, $target_height, $white);
+        
+        // Calculate position to center the resized image
+        $x = ($target_width - $new_width) / 2;
+        $y = ($target_height - $new_height) / 2;
+        
+        // Copy the resized image onto the square thumbnail
+        imagecopy($thumb_image, $new_image, $x, $y, 0, 0, $new_width, $new_height);
+        
+        // Save as WebP
+        imagewebp($thumb_image, $thumb_path, 80);
+        
+        // Clean up
+        imagedestroy($source_image);
+        imagedestroy($new_image);
+        imagedestroy($thumb_image);
+        
+        return $thumb_path;
+    } catch (Exception $e) {
+        fwrite(STDERR, "Error processing image: " . $e->getMessage() . "\n");
+        return null;
+    }
 }
 
 
