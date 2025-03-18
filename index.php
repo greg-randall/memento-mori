@@ -271,44 +271,35 @@ function process_and_save_image($source_image, $thumb_path, $target_width, $targ
         $original_width = imagesx($source_image);
         $original_height = imagesy($source_image);
         
-        // Calculate new dimensions while maintaining aspect ratio
-        if ($original_width > $original_height) {
-            $new_width = $target_width;
-            $new_height = intval($original_height * ($target_width / $original_width));
-        } else {
-            $new_height = $target_height;
-            $new_width = intval($original_width * ($target_height / $original_height));
-        }
-        
-        // Create a new image with the calculated dimensions
-        $new_image = imagecreatetruecolor($new_width, $new_height);
-        
-        // Preserve transparency
-        imagealphablending($new_image, false);
-        imagesavealpha($new_image, true);
-        $transparent = imagecolorallocatealpha($new_image, 255, 255, 255, 127);
-        imagefilledrectangle($new_image, 0, 0, $new_width, $new_height, $transparent);
-        
-        // Resize the image
-        imagecopyresampled(
-            $new_image, $source_image,
-            0, 0, 0, 0,
-            $new_width, $new_height, $original_width, $original_height
-        );
-        
-        // Create the final square thumbnail with padding
+        // Create the final square thumbnail
         $thumb_image = imagecreatetruecolor($target_width, $target_height);
         
         // Fill with white background
         $white = imagecolorallocate($thumb_image, 255, 255, 255);
         imagefilledrectangle($thumb_image, 0, 0, $target_width, $target_height, $white);
         
-        // Calculate position to center the resized image
-        $x = ($target_width - $new_width) / 2;
-        $y = ($target_height - $new_height) / 2;
+        // Calculate dimensions for cropping to ensure 1:1 aspect ratio
+        // We'll take the center portion of the image
+        if ($original_width > $original_height) {
+            // Landscape image: crop from the center horizontally
+            $src_x = ($original_width - $original_height) / 2;
+            $src_y = 0;
+            $src_w = $original_height;
+            $src_h = $original_height;
+        } else {
+            // Portrait image: crop from the center vertically
+            $src_x = 0;
+            $src_y = ($original_height - $original_width) / 2;
+            $src_w = $original_width;
+            $src_h = $original_width;
+        }
         
-        // Copy the resized image onto the square thumbnail
-        imagecopy($thumb_image, $new_image, $x, $y, 0, 0, $new_width, $new_height);
+        // Copy and resize the cropped portion directly to the thumbnail
+        imagecopyresampled(
+            $thumb_image, $source_image,
+            0, 0, $src_x, $src_y,
+            $target_width, $target_height, $src_w, $src_h
+        );
         
         // Save as WebP
         imagewebp($thumb_image, $thumb_path, 80);
@@ -687,7 +678,7 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
 
       .grid-item {
         position: relative;
-        aspect-ratio: 1;
+        aspect-ratio: 1/1;
         cursor: pointer;
         overflow: hidden;
       }
@@ -698,6 +689,7 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         height: 100%;
         object-fit: cover;
         transition: transform 0.3s ease;
+        aspect-ratio: 1/1;
       }
 
       .grid-item:hover img,
