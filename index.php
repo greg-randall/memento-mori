@@ -20,7 +20,8 @@ function copy_media_files($post_data, $profile_picture) {
   $media_dirs = [
       'distribution/media',
       'distribution/media/posts',
-      'distribution/media/other'
+      'distribution/media/other',
+      'distribution/thumbnails'
   ];
   
   foreach ($media_dirs as $dir) {
@@ -32,13 +33,35 @@ function copy_media_files($post_data, $profile_picture) {
   // Copy profile picture
   copy_file_to_distribution($profile_picture);
   
+  // Generate thumbnail for profile picture
+  generate_thumbnail($profile_picture, $profile_picture);
+  
   // Copy all post media
+  $total_media = 0;
+  $processed_media = 0;
+  
+  // Count total media files first
+  foreach ($post_data as $post) {
+      $total_media += count($post['media']);
+  }
+  
+  fwrite(STDERR, "Generating thumbnails for $total_media media files...\n");
+  
+  // Process each media file
   foreach ($post_data as $post) {
       foreach ($post['media'] as $media_url) {
           copy_file_to_distribution($media_url);
+          $processed_media++;
+          
+          // Show progress
+          if ($processed_media % 10 === 0 || $processed_media === $total_media) {
+              $percent = round(($processed_media / $total_media) * 100);
+              fwrite(STDERR, "Progress: $processed_media/$total_media ($percent%)\n");
+          }
       }
   }
   
+  fwrite(STDERR, "All media files and thumbnails processed.\n");
   echo "Media files copied to distribution folder.\n";
 }
 
@@ -65,7 +88,165 @@ function copy_file_to_distribution($file_path) {
   // Copy the file
   if (file_exists($source)) {
       copy($source, $destination);
+      
+      // Generate thumbnail for this file
+      generate_thumbnail($source, $file_path);
   }
+}
+
+/**
+ * Generate a thumbnail for an image or video file
+ * 
+ * @param string $source_path The source file path
+ * @param string $relative_path The relative path for naming the thumbnail
+ * @return string|null The path to the generated thumbnail or null if failed
+ */
+function generate_thumbnail($source_path, $relative_path) {
+    // Create thumbnails directory if it doesn't exist
+    $thumbs_dir = 'distribution/thumbnails';
+    if (!file_exists($thumbs_dir)) {
+        mkdir($thumbs_dir, 0755, true);
+    }
+    
+    // Generate a unique filename for the thumbnail based on the original path
+    $thumb_filename = md5($relative_path) . '.webp';
+    $thumb_path = $thumbs_dir . '/' . $thumb_filename;
+    
+    // Skip if thumbnail already exists
+    if (file_exists($thumb_path)) {
+        return $thumb_path;
+    }
+    
+    // Determine file type
+    $file_extension = strtolower(pathinfo($source_path, PATHINFO_EXTENSION));
+    $is_video = in_array($file_extension, ['mp4', 'mov', 'avi', 'webm']);
+    
+    // Target dimensions
+    $target_width = 292;
+    $target_height = 292;
+    
+    fwrite(STDERR, "Generating thumbnail for: $relative_path\n");
+    
+    try {
+        if ($is_video) {
+            // For videos, try to use FFmpeg to extract a frame
+            if (function_exists('exec')) {
+                $temp_jpg = tempnam(sys_get_temp_dir(), 'thumb') . '.jpg';
+                // Extract a frame at 1 second mark
+                exec("ffmpeg -i \"$source_path\" -ss 00:00:01 -vframes 1 -vf \"scale=$target_width:$target_height:force_original_aspect_ratio=decrease,pad=$target_width:$target_height:(ow-iw)/2:(oh-ih)/2:color=black\" \"$temp_jpg\" 2>&1", $output, $return_var);
+                
+                if ($return_var !== 0) {
+                    fwrite(STDERR, "FFmpeg error: " . implode("\n", $output) . "\n");
+                    return null;
+                }
+                
+                // Convert the extracted frame to WebP
+                if (function_exists('imagecreatefromjpeg') && function_exists('imagewebp')) {
+                    $image = imagecreatefromjpeg($temp_jpg);
+                    imagewebp($image, $thumb_path, 80);
+                    imagedestroy($image);
+                    unlink($temp_jpg); // Clean up temp file
+                    return $thumb_path;
+                }
+            }
+            
+            // If FFmpeg fails or is not available, use a placeholder
+            fwrite(STDERR, "Could not generate video thumbnail for: $relative_path\n");
+            return null;
+        } else {
+            // For images, use GD library
+            if (!function_exists('imagecreatefromjpeg') || !function_exists('imagewebp')) {
+                fwrite(STDERR, "GD library with WebP support is required\n");
+                return null;
+            }
+            
+            // Create image resource based on file type
+            $source_image = null;
+            switch ($file_extension) {
+                case 'jpg':
+                case 'jpeg':
+                    $source_image = imagecreatefromjpeg($source_path);
+                    break;
+                case 'png':
+                    $source_image = imagecreatefrompng($source_path);
+                    break;
+                case 'gif':
+                    $source_image = imagecreatefromgif($source_path);
+                    break;
+                case 'webp':
+                    $source_image = imagecreatefromwebp($source_path);
+                    break;
+                default:
+                    fwrite(STDERR, "Unsupported image format: $file_extension\n");
+                    return null;
+            }
+            
+            if (!$source_image) {
+                fwrite(STDERR, "Failed to create image resource for: $relative_path\n");
+                return null;
+            }
+            
+            // Get original dimensions
+            $original_width = imagesx($source_image);
+            $original_height = imagesy($source_image);
+            
+            // Calculate new dimensions while maintaining aspect ratio
+            if ($original_width > $original_height) {
+                $new_width = $target_width;
+                $new_height = intval($original_height * ($target_width / $original_width));
+            } else {
+                $new_height = $target_height;
+                $new_width = intval($original_width * ($target_height / $original_height));
+            }
+            
+            // Create a new image with the calculated dimensions
+            $new_image = imagecreatetruecolor($new_width, $new_height);
+            
+            // Preserve transparency for PNG images
+            if ($file_extension === 'png') {
+                imagealphablending($new_image, false);
+                imagesavealpha($new_image, true);
+                $transparent = imagecolorallocatealpha($new_image, 255, 255, 255, 127);
+                imagefilledrectangle($new_image, 0, 0, $new_width, $new_height, $transparent);
+            }
+            
+            // Resize the image
+            imagecopyresampled(
+                $new_image, $source_image,
+                0, 0, 0, 0,
+                $new_width, $new_height, $original_width, $original_height
+            );
+            
+            // Create the final square thumbnail with padding
+            $thumb_image = imagecreatetruecolor($target_width, $target_height);
+            
+            // Fill with white background
+            $white = imagecolorallocate($thumb_image, 255, 255, 255);
+            imagefilledrectangle($thumb_image, 0, 0, $target_width, $target_height, $white);
+            
+            // Calculate position to center the resized image
+            $x = ($target_width - $new_width) / 2;
+            $y = ($target_height - $new_height) / 2;
+            
+            // Copy the resized image onto the square thumbnail
+            imagecopy($thumb_image, $new_image, $x, $y, 0, 0, $new_width, $new_height);
+            
+            // Save as WebP
+            imagewebp($thumb_image, $thumb_path, 80);
+            
+            // Clean up
+            imagedestroy($source_image);
+            imagedestroy($new_image);
+            imagedestroy($thumb_image);
+            
+            return $thumb_path;
+        }
+    } catch (Exception $e) {
+        fwrite(STDERR, "Error generating thumbnail: " . $e->getMessage() . "\n");
+        return null;
+    }
+    
+    return null;
 }
 
 
@@ -90,35 +271,53 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
         
         if (isset($post['media'][0])) {
             $first_media = $post['media'][0];
+            $original_media = $first_media;
             $display_media = $first_media;
             
             // Check if first media is a video
             $is_video = preg_match('/\.(mp4|mov|avi|webm)$/i', $first_media);
             
-            // If it's a video, look for a thumbnail among all media items
-            if ($is_video) {
-                $found_thumbnail = false;
-                
-                // First check if there are any image files in the post's media that could be thumbnails
-                foreach ($post['media'] as $media_item) {
-                    if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $media_item)) {
-                        $display_media = $media_item;
-                        $found_thumbnail = true;
-                        break;
-                    }
-                }
-                
-                // If no thumbnail found, use a better SVG placeholder
-                if (!$found_thumbnail) {
-                    // Create a simple SVG with a play button
-                    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">';
-                    $svg .= '<rect width="400" height="400" fill="#333333"/>';
-                    $svg .= '<circle cx="200" cy="200" r="60" fill="#ffffff" fill-opacity="0.8"/>';
-                    $svg .= '<polygon points="180,160 180,240 240,200" fill="#333333"/>';
-                    $svg .= '</svg>';
+            // Check if we have a thumbnail for this media
+            $thumb_filename = md5($first_media) . '.webp';
+            $thumb_path = 'thumbnails/' . $thumb_filename;
+            
+            if (file_exists('distribution/' . $thumb_path)) {
+                // Use the thumbnail instead of the original
+                $display_media = $thumb_path;
+            } else {
+                // If it's a video, look for a thumbnail among all media items
+                if ($is_video) {
+                    $found_thumbnail = false;
                     
-                    // Encode the SVG properly for use in an img src attribute
-                    $display_media = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                    // First check if there are any image files in the post's media that could be thumbnails
+                    foreach ($post['media'] as $media_item) {
+                        if (preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $media_item)) {
+                            // Check if we have a thumbnail for this image
+                            $img_thumb_filename = md5($media_item) . '.webp';
+                            $img_thumb_path = 'thumbnails/' . $img_thumb_filename;
+                            
+                            if (file_exists('distribution/' . $img_thumb_path)) {
+                                $display_media = $img_thumb_path;
+                            } else {
+                                $display_media = $media_item;
+                            }
+                            $found_thumbnail = true;
+                            break;
+                        }
+                    }
+                    
+                    // If no thumbnail found, use a better SVG placeholder
+                    if (!$found_thumbnail) {
+                        // Create a simple SVG with a play button
+                        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">';
+                        $svg .= '<rect width="400" height="400" fill="#333333"/>';
+                        $svg .= '<circle cx="200" cy="200" r="60" fill="#ffffff" fill-opacity="0.8"/>';
+                        $svg .= '<polygon points="180,160 180,240 240,200" fill="#333333"/>';
+                        $svg .= '</svg>';
+                        
+                        // Encode the SVG properly for use in an img src attribute
+                        $display_media = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                    }
                 }
             }
         }
