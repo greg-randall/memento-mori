@@ -6,22 +6,64 @@
 
 ![Memento Mori Interface Preview](preview.gif)
 
+## ⚠️ IMPORTANT SECURITY WARNING ⚠️
+
+**DO NOT** share your raw Instagram export online! It contains sensitive data you probably don't want to share:
+- Phone numbers
+- Precise location data
+- Personal messages
+- Email addresses
+- Other private information
+
+Only share the generated `distribution` folder after processing with this tool.
+
 ## How It Works
 
 Memento Mori processes your Instagram data export and generates a static site with your posts, copying all your media files into an organized structure that can be viewed offline or hosted on your own website.
+
+## Features
+
+- Displays your posts in a familiar Instagram-like grid
+- Shows post details, like counts, and impression statistics when clicking on a post
+- Supports multiple images per post with carousel navigation
+- Plays videos with native controls
+- Fully responsive design that works on mobile and desktop
+- Converts images to WebP format for smaller file sizes (when beneficial)
+- Generates thumbnails for faster loading
+- Creates video thumbnails for better preview
+- Sorts posts by newest, oldest, most likes, most comments, most views, or randomly
+- Shareable links to specific posts and images
+- Copies all your media files to the distribution folder, maintaining the original structure
+
+## Requirements
+
+- PHP 7.2+ with GD library and WebP support
+- Your Instagram data export (in the original folder structure)
+- For video thumbnail generation: FFmpeg (optional but recommended)
+- For HEIC file support: ImageMagick (optional)
 
 ## How to Use
 
 1. Request and download your Instagram data archive (Settings > Privacy and Security > Data Download)
 2. Extract the archive to a folder
 3. Place the Memento Mori files in the same folder as your extracted archive
-4. Run the PHP script: `php index.php`
+4. Run the PHP script:
+   - **Recommended for large archives**: Run from command line: `php index.php`
+   - For smaller archives: Access through a web server
 5. A `distribution` folder will be created containing your Instagram archive viewer and media files
 6. Open `distribution/index.html` in your browser or upload the entire distribution folder to your web hosting
 
-You can also view the site directly in your browser while running the PHP script, as it outputs the HTML content to the browser as well as saving it to the distribution folder.
+**Note**: Processing can take significant time for large archives, especially during thumbnail generation and WebP conversion. The script will show progress in the command line.
 
-**DO NOT** share your raw Instagram export online, there's data you probably don't want to share, phone number, precise location data, personal messages, etc!!!
+## Processing Details
+
+During processing, Memento Mori:
+
+1. Copies all media files to the distribution folder
+2. Converts images to WebP format when it results in smaller file sizes
+3. Generates thumbnails for all images and videos
+4. Creates a responsive HTML interface with your posts
+5. Organizes everything into a clean, standalone website
 
 ## Why This Exists
 
@@ -33,17 +75,8 @@ Instagram, like many social platforms, has undergone significant "enshittificati
 
 When requesting your data from Instagram, the export you receive contains all your content but in a format that's intentionally difficult to navigate and enjoy. Memento Mori solves this problem by transforming your archive into an intuitive, familiar interface that brings your memories back to life.
 
-## Requirements
+## Troubleshooting
 
-- PHP (to run the generator script)
-- Your Instagram data export (in the original folder structure)
-
-## Features
-
-- Displays your posts in a familiar Instagram-like grid
-- Shows post details, like counts, and impression statistics when clicking on a post
-- Supports multiple images per post with carousel navigation
-- Plays videos with native controls
-- Fully responsive design that works on mobile and desktop
-- Copies all your media files to the distribution folder, maintaining the original structure
-- Shareable links to specific posts
+- If you see errors about GD library or WebP support, you may need to install additional PHP extensions
+- For video thumbnail generation, ensure FFmpeg is installed and accessible in your system path
+- For HEIC file support, ensure ImageMagick is installed
