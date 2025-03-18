@@ -57,14 +57,48 @@ function copy_media_files($post_data, $profile_picture) {
       }
   }
   
-  // Count how many thumbnails were successfully generated
+  // Count how many thumbnails and WebP conversions were successfully generated
   $thumbnail_count = 0;
+  $webp_count = 0;
+  $total_size_original = 0;
+  $total_size_webp = 0;
+  
   if (is_dir('distribution/thumbnails')) {
       $thumbnail_count = count(glob('distribution/thumbnails/*.webp'));
   }
   
+  // Count WebP conversions and calculate space savings
+  foreach ($post_data as $post) {
+      foreach ($post['media'] as $media_url) {
+          if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $media_url)) {
+              $original_path = $media_url;
+              $webp_path = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $media_url);
+              
+              if (file_exists('distribution/' . $webp_path)) {
+                  $webp_count++;
+                  
+                  // Calculate size difference if original exists
+                  if (file_exists($original_path)) {
+                      $original_size = filesize($original_path);
+                      $webp_size = filesize('distribution/' . $webp_path);
+                      $total_size_original += $original_size;
+                      $total_size_webp += $webp_size;
+                  }
+              }
+          }
+      }
+  }
+  
+  // Calculate total space savings
+  $space_saved_mb = ($total_size_original - $total_size_webp) / (1024 * 1024);
+  
   fwrite(STDERR, "All media files and thumbnails processed.\n");
   fwrite(STDERR, "Successfully generated $thumbnail_count thumbnails.\n");
+  fwrite(STDERR, "Successfully converted $webp_count images to WebP format.\n");
+  fwrite(STDERR, sprintf("Total space saved: %.2f MB (%.1f%%)\n", 
+      $space_saved_mb, 
+      $total_size_original > 0 ? (($total_size_original - $total_size_webp) / $total_size_original * 100) : 0
+  ));
   echo "Media files copied to distribution folder.\n";
 }
 
@@ -355,6 +389,15 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
                 $display_media = $thumb_path;
                 fwrite(STDERR, "Using thumbnail for: $first_media\n");
             } else {
+                // Check if we have a WebP version of the original image
+                if (!$is_video) {
+                    $webp_path = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $first_media);
+                    if (file_exists('distribution/' . $webp_path)) {
+                        $display_media = $webp_path;
+                        fwrite(STDERR, "Using WebP version for: $first_media\n");
+                    }
+                }
+                
                 // If it's a video, look for a thumbnail among all media items
                 if ($is_video) {
                     $found_thumbnail = false;
