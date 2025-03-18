@@ -122,13 +122,116 @@ function copy_file_to_distribution($file_path) {
       mkdir($dir, 0755, true);
   }
   
-  // Copy the file
-  if (file_exists($source)) {
+  // Check if it's an image file that can be converted to WebP
+  $is_image = preg_match('/\.(jpg|jpeg|png|gif)$/i', $file_path);
+  $is_video = preg_match('/\.(mp4|mov|avi|webm)$/i', $file_path);
+  
+  if ($is_image && file_exists($source)) {
+      // Convert image to WebP for better compression
+      $webp_destination = preg_replace('/\.(jpg|jpeg|png|gif)$/i', '.webp', $destination);
+      convert_to_webp($source, $webp_destination);
+      
+      // Generate thumbnail for this file
+      generate_thumbnail($source, $file_path);
+  } else if (file_exists($source)) {
+      // Copy the file as is (for videos and other file types)
       copy($source, $destination);
       
       // Generate thumbnail for this file
       generate_thumbnail($source, $file_path);
   }
+}
+
+/**
+ * Convert an image to WebP format without cropping
+ * 
+ * @param string $source_path The source image path
+ * @param string $destination_path The destination WebP path
+ * @return bool True if successful, false otherwise
+ */
+function convert_to_webp($source_path, $destination_path) {
+    try {
+        // Detect file type by examining file contents
+        $file_info = new finfo(FILEINFO_MIME_TYPE);
+        $mime_type = $file_info->file($source_path);
+        
+        // Create image resource based on mime type
+        $source_image = null;
+        
+        switch ($mime_type) {
+            case 'image/jpeg':
+                $source_image = @imagecreatefromjpeg($source_path);
+                break;
+            case 'image/png':
+                $source_image = @imagecreatefrompng($source_path);
+                // Preserve transparency for PNG
+                if ($source_image) {
+                    imagepalettetotruecolor($source_image);
+                    imagealphablending($source_image, true);
+                    imagesavealpha($source_image, true);
+                }
+                break;
+            case 'image/gif':
+                $source_image = @imagecreatefromgif($source_path);
+                break;
+            default:
+                // Try to load as JPEG first, then PNG, then GIF as fallbacks
+                $source_image = @imagecreatefromjpeg($source_path);
+                if (!$source_image) {
+                    $source_image = @imagecreatefrompng($source_path);
+                    if ($source_image) {
+                        imagepalettetotruecolor($source_image);
+                        imagealphablending($source_image, true);
+                        imagesavealpha($source_image, true);
+                    }
+                }
+                if (!$source_image) {
+                    $source_image = @imagecreatefromgif($source_path);
+                }
+                break;
+        }
+        
+        if (!$source_image) {
+            fwrite(STDERR, "Failed to create image resource for conversion: " . $source_path . "\n");
+            // Fall back to copying the original file
+            copy($source_path, str_replace('.webp', '.jpg', $destination_path));
+            return false;
+        }
+        
+        // Save as WebP with 80% quality (good balance between quality and file size)
+        $result = imagewebp($source_image, $destination_path, 80);
+        
+        // Clean up
+        imagedestroy($source_image);
+        
+        if ($result) {
+            // Check if the WebP file is actually smaller than the original
+            $original_size = filesize($source_path);
+            $webp_size = filesize($destination_path);
+            
+            if ($webp_size > 0 && $webp_size < $original_size) {
+                fwrite(STDERR, "Converted to WebP: " . $source_path . " (saved " . 
+                       round(($original_size - $webp_size) / 1024, 2) . " KB)\n");
+                return true;
+            } else {
+                // If WebP is larger or failed, use the original file
+                unlink($destination_path);
+                copy($source_path, str_replace('.webp', '.jpg', $destination_path));
+                fwrite(STDERR, "WebP larger than original, using original: " . $source_path . "\n");
+                return false;
+            }
+        } else {
+            // If WebP conversion failed, use the original file
+            copy($source_path, str_replace('.webp', '.jpg', $destination_path));
+            fwrite(STDERR, "WebP conversion failed, using original: " . $source_path . "\n");
+            return false;
+        }
+    } catch (Exception $e) {
+        fwrite(STDERR, "Error converting to WebP: " . $e->getMessage() . "\n");
+        // Fall back to copying the original file
+        copy($source_path, str_replace('.webp', '.jpg', $destination_path));
+        return false;
+    }
 }
 
 /**
