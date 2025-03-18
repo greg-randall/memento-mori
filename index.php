@@ -306,7 +306,6 @@ function process_and_save_image($source_image, $thumb_path, $target_width, $targ
         
         // Clean up
         imagedestroy($source_image);
-        imagedestroy($new_image);
         imagedestroy($thumb_image);
         
         return $thumb_path;
