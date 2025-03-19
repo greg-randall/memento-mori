@@ -2276,7 +2276,89 @@ ob_end_clean();
 // Write the HTML to the distribution folder
 file_put_contents('distribution/index.html', $html_content);
 
+// Verify all images in the HTML are accessible
+fwrite(STDERR, "Verifying all images in the generated HTML...\n");
+verify_images_in_html($html_content);
+
 // Output the content to the browser as well
 echo $html_content;
+
+/**
+ * Verify that all images referenced in the HTML actually exist
+ * 
+ * @param string $html_content The HTML content to check
+ */
+function verify_images_in_html($html_content) {
+    // Extract all image sources from the HTML
+    preg_match_all('/<img[^>]+src=([\'"])([^"\']+)\\1/i', $html_content, $matches);
+    
+    $image_sources = $matches[2];
+    $total_images = count($image_sources);
+    $missing_images = 0;
+    $fixed_images = 0;
+    
+    fwrite(STDERR, "Found $total_images image references to verify.\n");
+    
+    foreach ($image_sources as $src) {
+        // Skip data URIs
+        if (strpos($src, 'data:image') === 0) {
+            continue;
+        }
+        
+        // Check if the image exists in the distribution folder
+        $image_path = 'distribution/' . $src;
+        
+        if (!file_exists($image_path)) {
+            $missing_images++;
+            fwrite(STDERR, "Missing image: $src\n");
+            
+            // Try to find the image with a different extension
+            $base_path = pathinfo($image_path, PATHINFO_DIRNAME) . '/' . pathinfo($image_path, PATHINFO_FILENAME);
+            $found = false;
+            
+            // Check common image extensions
+            foreach (['.jpg', '.jpeg', '.png', '.gif', '.webp'] as $ext) {
+                $alt_path = $base_path . $ext;
+                if (file_exists($alt_path)) {
+                    fwrite(STDERR, "  Found alternative: " . basename($alt_path) . "\n");
+                    
+                    // Copy the file to the expected path
+                    copy($alt_path, $image_path);
+                    $fixed_images++;
+                    $found = true;
+                    break;
+                }
+            }
+            
+            if (!$found) {
+                // Check if the original file exists (before distribution)
+                $original_src = $src;
+                if (file_exists($original_src)) {
+                    fwrite(STDERR, "  Found original file, copying to distribution: $original_src\n");
+                    
+                    // Create directory if it doesn't exist
+                    $dir = dirname($image_path);
+                    if (!file_exists($dir)) {
+                        mkdir($dir, 0755, true);
+                    }
+                    
+                    // Copy the file
+                    copy($original_src, $image_path);
+                    $fixed_images++;
+                }
+            }
+        }
+    }
+    
+    // Report results
+    if ($missing_images === 0) {
+        fwrite(STDERR, "All images verified successfully!\n");
+    } else {
+        fwrite(STDERR, "Found $missing_images missing images, fixed $fixed_images.\n");
+        if ($missing_images > $fixed_images) {
+            fwrite(STDERR, "WARNING: " . ($missing_images - $fixed_images) . " images could not be fixed.\n");
+        }
+    }
+}
 ?>
 
