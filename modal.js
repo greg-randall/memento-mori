@@ -526,6 +526,9 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
             }
         });
         
+        // Store the current scroll position before closing the modal
+        const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        
         postModal.style.display = 'none';
         document.body.style.overflow = 'auto'; // Re-enable scrolling
         
@@ -534,6 +537,14 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
         url.searchParams.delete('post');
         url.searchParams.delete('image');
         window.history.pushState({}, '', url);
+        
+        // Restore the scroll position after a short delay
+        setTimeout(() => {
+            window.scrollTo({
+                top: scrollPosition,
+                behavior: 'auto' // Use 'auto' instead of 'smooth' to prevent visible scrolling
+            });
+        }, 10);
     }
     
     // Event listeners for modal navigation
