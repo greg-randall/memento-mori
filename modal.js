@@ -179,9 +179,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Open the modal with the selected post
-  // Replace the openModal function with this updated version
 function openModal(index, imageIndex = 0) {
     currentPostIndex = index;
+    
+    // Store the current scroll position before opening the modal
+    const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     
     // Get the timestamp using the post_index mapping
     const timestamp = postIndexToTimestamp[index];
@@ -193,6 +195,9 @@ function openModal(index, imageIndex = 0) {
     postModal.style.display = 'block';
     document.body.style.overflow = 'hidden'; // Prevent scrolling
     
+    // Store the scroll position as a data attribute on the modal
+    postModal.setAttribute('data-scroll-position', scrollPosition);
+    
     // Update modal content
     updateModalContent(post, imageIndex);
     
@@ -201,7 +206,8 @@ function openModal(index, imageIndex = 0) {
     
     // For mobile devices, ensure content is visible and properly sized
     if (window.innerWidth <= 768) {
-        window.scrollTo(0, 0);
+        // Don't scroll to top on mobile as it causes the issue
+        // Instead, just ensure the modal is properly positioned
         postModal.scrollTop = 0;
         
         // Force layout recalculation with a longer timeout
