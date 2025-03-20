@@ -945,25 +945,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
         flex-grow: 1;
       }
       
-      .share-button {
-        cursor: pointer;
-        padding: 5px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s;
-      }
-      
-      .share-button:hover {
-        background-color: rgba(0, 0, 0, 0.1);
-      }
-      
-      .share-button svg {
-        width: 18px;
-        height: 18px;
-        color: #8e8e8e;
-      }
 
       .post-caption {
         padding: 16px;
@@ -1398,18 +1379,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
     <!-- Script to make post data available to JavaScript -->
     <script>
         window.postData = <?php echo json_encode($post_data); ?>;
-        
-        // Function to copy the current URL to clipboard
-        function copyCurrentUrl() {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url)
-                .then(() => {
-                    alert('Link copied to clipboard!');
-                })
-                .catch(err => {
-                    console.error('Could not copy URL: ', err);
-                });
-        }
     </script>
     <?php
     // Include the modal.js content directly in the output
@@ -1469,12 +1438,6 @@ $first_timestamp = gmdate("F Y",$post_data[$last_key]['creation_timestamp_unix']
                         <img src="<?php echo $profile_picture; ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                     </div>
                     <div class="post-username" id="postUsername"><?php echo $user_name; ?></div>
-                    <div class="share-button" onclick="copyCurrentUrl()" title="Copy link to this post">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                        </svg>
-                    </div>
                 </div>
                 <div class="post-caption" id="postCaption"></div>
                 <div class="post-stats" id="postStats"></div>
@@ -2253,12 +2216,6 @@ ob_start();
                         <img src="<?php echo $profile_picture; ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                     </div>
                     <div class="post-username" id="postUsername"><?php echo $user_name; ?></div>
-                    <div class="share-button" onclick="copyCurrentUrl()" title="Copy link to this post">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                        </svg>
-                    </div>
                 </div>
                 <div class="post-caption" id="postCaption"></div>
                 <div class="post-stats" id="postStats"></div>
