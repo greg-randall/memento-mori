@@ -409,7 +409,7 @@ function updateUrlWithPostInfo(timestamp, imageIndex) {
             likesDiv.className = 'post-stat';
             likesDiv.innerHTML = `
                 <span class="post-stat-icon">♥</span>
-                <span>${post.Likes} likes</span>
+                <span>${post.Likes}</span>
             `;
             postStats.appendChild(likesDiv);
         }

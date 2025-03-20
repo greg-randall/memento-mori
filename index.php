@@ -549,7 +549,7 @@ function render_instagram_grid($post_data, $lazy_after = 30) {
         if ($media_count > 1) {
             $output .= '          <div class="multi-indicator">⊞ ' . $media_count . '</div>' . "\n";
         } elseif (isset($post['Likes']) && $post['Likes'] !== '') {
-            $output .= '          <div class="likes-indicator">♥ ' . $post['Likes'] . ' Likes</div>' . "\n";
+            $output .= '          <div class="likes-indicator">♥ ' . $post['Likes'] . '</div>' . "\n";
         }
         
         $output .= '        </div>' . "\n";
