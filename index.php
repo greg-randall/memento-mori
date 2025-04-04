@@ -580,11 +580,67 @@ unset($location_data);
 //echo "location: $location\n";
 
 
+// Function to search for posts_1.json file recursively
+function find_posts_json() {
+    $standard_path = 'your_instagram_activity/content/posts_1.json';
+    
+    // First check the standard location
+    if (file_exists($standard_path)) {
+        return $standard_path;
+    }
+    
+    // If not found, search recursively
+    fwrite(STDERR, "posts_1.json not found in standard location, searching directories...\n");
+    
+    $found_files = [];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator('.', RecursiveDirectoryIterator::SKIP_DOTS)
+    );
+    
+    foreach ($iterator as $file) {
+        if ($file->getFilename() === 'posts_1.json') {
+            $found_files[] = $file->getPathname();
+        }
+    }
+    
+    if (empty($found_files)) {
+        fwrite(STDERR, "ERROR: Could not find posts_1.json anywhere in the directory structure.\n");
+        return false;
+    }
+    
+    // If multiple files found, use the one that seems most likely
+    if (count($found_files) > 1) {
+        fwrite(STDERR, "Found multiple posts_1.json files:\n");
+        foreach ($found_files as $index => $path) {
+            fwrite(STDERR, "  [$index] $path\n");
+        }
+        
+        // Try to find the one in a directory with "content" or "activity" in the path
+        foreach ($found_files as $path) {
+            if (strpos($path, 'content') !== false || strpos($path, 'activity') !== false) {
+                fwrite(STDERR, "Selected: $path\n");
+                return $path;
+            }
+        }
+        
+        // If no preferred path found, use the first one
+        fwrite(STDERR, "Selected: {$found_files[0]}\n");
+        return $found_files[0];
+    }
+    
+    fwrite(STDERR, "Found posts_1.json at: {$found_files[0]}\n");
+    return $found_files[0];
+}
+
 // Load and decode the JSON files
 $insights_data = file_get_contents('logged_information/past_instagram_insights/posts.json');
 $insights_data = json_decode($insights_data, true);
 
-$post_data = file_get_contents('your_instagram_activity/content/posts_1.json');
+$posts_json_path = find_posts_json();
+if (!$posts_json_path) {
+    die("ERROR: Could not find the posts_1.json file. Please ensure your Instagram data is properly extracted.");
+}
+$post_data = file_get_contents($posts_json_path);
 $post_data = json_decode($post_data, true);
 
 // Create an indexed array of insights data using creation_timestamp as key
