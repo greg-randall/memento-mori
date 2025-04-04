@@ -237,8 +237,6 @@ def generate_thumbnail(source_path, relative_path):
     target_width = 292
     target_height = 292
     
-    print(f"Generating thumbnail for: {relative_path}", file=sys.stderr)
-    
     try:
         # Check if file exists
         if not os.path.exists(source_path):
