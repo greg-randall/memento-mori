@@ -200,7 +200,7 @@ def convert_to_webp(source_path, destination_path):
 
 def generate_thumbnail(source_path, relative_path):
     """
-    Generate a thumbnail for an image or video file
+    Generate a thumbnail for an image or video file using Python libraries
     
     Args:
         source_path: The source file path
@@ -238,29 +238,76 @@ def generate_thumbnail(source_path, relative_path):
         is_video = bool(re.search(r'\.(mp4|mov|avi|webm)$', source_path, re.I))
         
         if is_video:
-            # For videos, try to use FFmpeg to extract a frame
+            # For videos, use OpenCV to extract a frame
             try:
-                temp_jpg = os.path.join(os.path.dirname(thumb_path), 'temp_thumb.jpg')
-                # Extract a frame at 1 second mark
-                cmd = [
-                    'ffmpeg', '-i', source_path, '-ss', '00:00:01', '-vframes', '1',
-                    '-vf', f'scale={target_width}:{target_height}:force_original_aspect_ratio=decrease,pad={target_width}:{target_height}:(ow-iw)/2:(oh-ih)/2:color=black',
-                    temp_jpg
-                ]
+                import cv2
                 
-                result = subprocess.run(cmd, capture_output=True, text=True)
+                # Open the video file
+                video = cv2.VideoCapture(source_path)
                 
-                if result.returncode != 0:
-                    print(f"FFmpeg error: {result.stderr}", file=sys.stderr)
+                # Check if video opened successfully
+                if not video.isOpened():
+                    print(f"Could not open video: {source_path}", file=sys.stderr)
                     return None
                 
-                # Convert the extracted frame to WebP
-                with Image.open(temp_jpg) as img:
-                    img.save(thumb_path, 'WEBP', quality=80)
+                # Get video properties
+                total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+                fps = video.get(cv2.CAP_PROP_FPS)
                 
-                # Clean up temp file
-                os.unlink(temp_jpg)
+                # Try to get a frame from 1 second in, or the middle if it's a short video
+                target_frame = min(int(fps), total_frames // 2) if fps > 0 else total_frames // 2
+                
+                # Set the frame position
+                video.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+                
+                # Read the frame
+                success, frame = video.read()
+                
+                # Release the video capture object
+                video.release()
+                
+                if not success:
+                    print(f"Failed to extract frame from video: {source_path}", file=sys.stderr)
+                    return None
+                
+                # Convert BGR to RGB (OpenCV uses BGR by default)
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # Create PIL Image from the frame
+                img = Image.fromarray(frame_rgb)
+                
+                # Get original dimensions
+                original_width, original_height = img.size
+                
+                # Calculate dimensions for cropping to ensure 1:1 aspect ratio
+                if original_width > original_height:
+                    # Landscape image: crop from the center horizontally
+                    src_x = (original_width - original_height) // 2
+                    src_y = 0
+                    src_w = original_height
+                    src_h = original_height
+                else:
+                    # Portrait image: crop from the center vertically
+                    src_x = 0
+                    src_y = (original_height - original_width) // 2
+                    src_w = original_width
+                    src_h = original_width
+                
+                # Crop the image
+                img = img.crop((src_x, src_y, src_x + src_w, src_y + src_h))
+                
+                # Resize to target dimensions
+                img = img.resize((target_width, target_height), Image.LANCZOS)
+                
+                # Save as WebP
+                img.save(thumb_path, 'WEBP', quality=80)
+                
                 return thumb_path
+                
+            except ImportError:
+                print("OpenCV (cv2) is not installed. Cannot generate video thumbnails.", file=sys.stderr)
+                print("Install it with: pip install opencv-python", file=sys.stderr)
+                return None
             except Exception as e:
                 print(f"Error generating video thumbnail: {str(e)}", file=sys.stderr)
                 return None
