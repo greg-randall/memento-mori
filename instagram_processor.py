@@ -16,6 +16,7 @@ import threading
 import argparse
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 # Create distribution directory if it doesn't exist
 if not os.path.exists('distribution'):
@@ -69,26 +70,17 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
     total_media = len(all_media)
     print(f"Generating thumbnails for {total_media} media files using {thread_count} threads...", file=sys.stderr)
     
-    # Process media files in parallel using a thread pool
-    processed_media = 0
-    
-    # Create a lock for thread-safe progress updates
-    progress_lock = threading.Lock()
-    
+    # Process media files in parallel using a thread pool with tqdm progress bar
     def process_media_file(media_url):
-        nonlocal processed_media
         copy_file_to_distribution(media_url)
-        
-        # Update progress (thread-safe)
-        with progress_lock:
-            processed_media += 1
-            if processed_media % 10 == 0 or processed_media == total_media:
-                percent = round((processed_media / total_media) * 100)
-                print(f"Progress: {processed_media}/{total_media} ({percent}%)", file=sys.stderr)
     
-    # Use ThreadPoolExecutor to process files in parallel
+    # Use ThreadPoolExecutor with tqdm to process files in parallel
+    print(f"Processing media files...", file=sys.stderr)
     with ThreadPoolExecutor(max_workers=thread_count) as executor:
-        executor.map(process_media_file, all_media)
+        list(tqdm(executor.map(process_media_file, all_media), 
+                 total=total_media, 
+                 desc="Processing media files", 
+                 unit="files"))
     
     # Count how many thumbnails and WebP conversions were successfully generated
     thumbnail_count = 0
@@ -100,21 +92,23 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
         thumbnail_count = len([f for f in os.listdir('distribution/thumbnails') if f.endswith('.webp')])
     
     # Count WebP conversions and calculate space savings
+    print("Calculating space savings from WebP conversion...", file=sys.stderr)
+    webp_items = []
     for timestamp, post in post_data.items():
         for media_url in post['media']:
             if re.search(r'\.(jpg|jpeg|png|gif)$', media_url, re.I):
-                original_path = media_url
-                webp_path = re.sub(r'\.(jpg|jpeg|png|gif)$', '.webp', media_url, flags=re.I)
-                
-                if os.path.exists(os.path.join('distribution', webp_path)):
-                    webp_count += 1
-                    
-                    # Calculate size difference if original exists
-                    if os.path.exists(original_path):
-                        original_size = os.path.getsize(original_path)
-                        webp_size = os.path.getsize(os.path.join('distribution', webp_path))
-                        total_size_original += original_size
-                        total_size_webp += webp_size
+                webp_items.append((media_url, re.sub(r'\.(jpg|jpeg|png|gif)$', '.webp', media_url, flags=re.I)))
+    
+    for original_path, webp_path in tqdm(webp_items, desc="Checking WebP conversions", unit="file"):
+        if os.path.exists(os.path.join('distribution', webp_path)):
+            webp_count += 1
+            
+            # Calculate size difference if original exists
+            if os.path.exists(original_path):
+                original_size = os.path.getsize(original_path)
+                webp_size = os.path.getsize(os.path.join('distribution', webp_path))
+                total_size_original += original_size
+                total_size_webp += webp_size
     
     # Calculate total space savings
     space_saved_mb = (total_size_original - total_size_webp) / (1024 * 1024)
@@ -559,7 +553,8 @@ def verify_images_in_html(html_content):
     
     print(f"Found {total_images} image references to verify.", file=sys.stderr)
     
-    for src in image_sources:
+    # Use tqdm for progress tracking
+    for src in tqdm(image_sources, desc="Verifying images", unit="img"):
         # Skip data URIs
         if src.startswith('data:image'):
             continue
