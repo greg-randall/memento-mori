@@ -72,7 +72,7 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
     
     # Process media files in parallel using a thread pool with tqdm progress bar
     def process_media_file(media_url):
-        copy_file_to_distribution(media_url)
+        copy_file_to_distribution(media_url, quiet=True)
     
     # Use ThreadPoolExecutor with tqdm to process files in parallel
     print(f"Processing media files...", file=sys.stderr)
@@ -81,6 +81,9 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
                  total=total_media, 
                  desc="Processing media files", 
                  unit="files"))
+    
+    # Log summary of conversion operations
+    print(f"Finished processing {total_media} media files", file=sys.stderr)
     
     # Count how many thumbnails and WebP conversions were successfully generated
     thumbnail_count = 0
@@ -119,12 +122,13 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
     print(f"Total space saved: {space_saved_mb:.2f} MB ({(total_size_original - total_size_webp) / total_size_original * 100:.1f}% if original > 0 else 0)%", file=sys.stderr)
     print("Media files copied to distribution folder.")
 
-def copy_file_to_distribution(file_path):
+def copy_file_to_distribution(file_path, quiet=False):
     """
     Copy a single file to the distribution folder, maintaining its path structure
     
     Args:
         file_path: The path to the file
+        quiet: Whether to suppress output messages
     """
     # Skip if it's already a data URI
     if file_path.startswith('data:image'):
@@ -138,7 +142,8 @@ def copy_file_to_distribution(file_path):
     
     # Check if source file exists
     if not os.path.exists(source):
-        print(f"Warning: Source file does not exist: {source}", file=sys.stderr)
+        if not quiet:
+            print(f"Warning: Source file does not exist: {source}", file=sys.stderr)
         return
     
     # Check if it's an image file that can be converted to WebP
@@ -148,24 +153,25 @@ def copy_file_to_distribution(file_path):
     if is_image and os.path.exists(source):
         # Convert image to WebP for better compression
         webp_destination = re.sub(r'\.(jpg|jpeg|png|gif)$', '.webp', destination, flags=re.I)
-        convert_to_webp(source, webp_destination)
+        convert_to_webp(source, webp_destination, quiet)
         
         # Generate thumbnail for this file
-        generate_thumbnail(source, file_path)
+        generate_thumbnail(source, file_path, quiet)
     elif os.path.exists(source):
         # Copy the file as is (for videos and other file types)
         shutil.copy2(source, destination)
         
         # Generate thumbnail for this file
-        generate_thumbnail(source, file_path)
+        generate_thumbnail(source, file_path, quiet)
 
-def convert_to_webp(source_path, destination_path):
+def convert_to_webp(source_path, destination_path, quiet=False):
     """
     Convert an image to WebP format without cropping
     
     Args:
         source_path: The source image path
         destination_path: The destination WebP path
+        quiet: Whether to suppress output messages
     
     Returns:
         bool: True if successful, False otherwise
@@ -190,7 +196,8 @@ def convert_to_webp(source_path, destination_path):
         webp_size = os.path.getsize(destination_path)
         
         if webp_size > 0 and webp_size < original_size:
-            print(f"Converted to WebP: {source_path} (saved {(original_size - webp_size) / 1024:.2f} KB)", file=sys.stderr)
+            if not quiet:
+                print(f"Converted to WebP: {source_path} (saved {(original_size - webp_size) / 1024:.2f} KB)", file=sys.stderr)
             return True
         else:
             # If WebP is larger or failed, use the original file
@@ -199,23 +206,26 @@ def convert_to_webp(source_path, destination_path):
             original_ext = os.path.splitext(source_path)[1]
             original_destination = re.sub(r'\.webp$', original_ext, destination_path)
             shutil.copy2(source_path, original_destination)
-            print(f"WebP larger than original, using original: {source_path}", file=sys.stderr)
+            if not quiet:
+                print(f"WebP larger than original, using original: {source_path}", file=sys.stderr)
             return False
     except Exception as e:
-        print(f"Error converting to WebP: {str(e)}", file=sys.stderr)
+        if not quiet:
+            print(f"Error converting to WebP: {str(e)}", file=sys.stderr)
         # Fall back to copying the original file with its original extension
         original_ext = os.path.splitext(source_path)[1]
         original_destination = re.sub(r'\.webp$', original_ext, destination_path)
         shutil.copy2(source_path, original_destination)
         return False
 
-def generate_thumbnail(source_path, relative_path):
+def generate_thumbnail(source_path, relative_path, quiet=False):
     """
     Generate a thumbnail for an image or video file using Python libraries
     
     Args:
         source_path: The source file path
         relative_path: The relative path for naming the thumbnail
+        quiet: Whether to suppress output messages
     
     Returns:
         str or None: The path to the generated thumbnail or None if failed
@@ -240,7 +250,8 @@ def generate_thumbnail(source_path, relative_path):
     try:
         # Check if file exists
         if not os.path.exists(source_path):
-            print(f"File not found: {source_path}", file=sys.stderr)
+            if not quiet:
+                print(f"File not found: {source_path}", file=sys.stderr)
             return None
         
         # Determine file type
