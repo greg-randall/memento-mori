@@ -48,6 +48,15 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
     # Copy profile picture
     copy_file_to_distribution(profile_picture)
     
+    # Make sure the profile picture exists in the distribution folder
+    profile_dest = os.path.join('distribution', profile_picture)
+    if not os.path.exists(profile_dest):
+        print(f"Profile picture not found at {profile_dest}, trying direct copy...", file=sys.stderr)
+        if os.path.exists(profile_picture):
+            os.makedirs(os.path.dirname(profile_dest), exist_ok=True)
+            shutil.copy2(profile_picture, profile_dest)
+            print(f"Copied profile picture directly to {profile_dest}", file=sys.stderr)
+    
     # Generate thumbnail for profile picture
     generate_thumbnail(profile_picture, profile_picture)
     
@@ -132,6 +141,11 @@ def copy_file_to_distribution(file_path):
     
     # Create directory structure if it doesn't exist
     os.makedirs(os.path.dirname(destination), exist_ok=True)
+    
+    # Check if source file exists
+    if not os.path.exists(source):
+        print(f"Warning: Source file does not exist: {source}", file=sys.stderr)
+        return
     
     # Check if it's an image file that can be converted to WebP
     is_image = bool(re.search(r'\.(jpg|jpeg|png|gif)$', file_path, re.I))
