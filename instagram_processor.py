@@ -552,6 +552,38 @@ def extract_relevant_data(combined_data):
     # Sort by timestamp (newest first)
     return dict(sorted(simplified_data.items(), key=lambda x: x[0], reverse=True))
 
+def find_posts_json():
+    """
+    Search for posts_1.json file in the repository
+    
+    Returns:
+        str: Path to the posts_1.json file or None if not found
+    """
+    standard_path = 'your_instagram_activity/content/posts_1.json'
+    
+    # Check standard location first
+    if os.path.exists(standard_path):
+        print(f"Found posts_1.json at standard location: {standard_path}", file=sys.stderr)
+        return standard_path
+    
+    # If not found, search for it
+    print("posts_1.json not found at standard location, searching...", file=sys.stderr)
+    
+    # Use os.walk to search through all directories
+    for root, dirs, files in os.walk('.'):
+        # Skip distribution directory and hidden directories
+        if 'distribution' in root or root.startswith('./.'):
+            continue
+            
+        for file in files:
+            if file == 'posts_1.json':
+                file_path = os.path.join(root, file)
+                print(f"Found posts_1.json at: {file_path}", file=sys.stderr)
+                return file_path
+    
+    print("ERROR: Could not find posts_1.json anywhere in the repository", file=sys.stderr)
+    return None
+
 def verify_images_in_html(html_content):
     """
     Verify that all images referenced in the HTML actually exist
@@ -652,7 +684,12 @@ def main():
     with open('logged_information/past_instagram_insights/posts.json', 'r') as f:
         insights_data = json.load(f)
     
-    with open('your_instagram_activity/content/posts_1.json', 'r') as f:
+    posts_file_path = find_posts_json()
+    if not posts_file_path:
+        print("Cannot continue without posts_1.json file", file=sys.stderr)
+        sys.exit(1)
+
+    with open(posts_file_path, 'r') as f:
         post_data = json.load(f)
     
     # Create an indexed array of insights data using creation_timestamp as key
