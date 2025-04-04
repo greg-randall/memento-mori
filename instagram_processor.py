@@ -12,19 +12,27 @@ from pathlib import Path
 import subprocess
 from PIL import Image
 import io
+import threading
+import argparse
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor
 
 # Create distribution directory if it doesn't exist
 if not os.path.exists('distribution'):
     os.makedirs('distribution', mode=0o755, exist_ok=True)
 
-def copy_media_files(post_data, profile_picture):
+def copy_media_files(post_data, profile_picture, thread_count=None):
     """
-    Copy media files to the distribution folder
+    Copy media files to the distribution folder using multiple threads
     
     Args:
         post_data: The post data containing media URLs
         profile_picture: The profile picture URL
+        thread_count: Number of threads to use (default: CPU count - 1)
     """
+    if thread_count is None:
+        thread_count = max(1, multiprocessing.cpu_count() - 1)
+    
     # Create media directories in distribution folder
     media_dirs = [
         'distribution/media',
@@ -43,26 +51,35 @@ def copy_media_files(post_data, profile_picture):
     # Generate thumbnail for profile picture
     generate_thumbnail(profile_picture, profile_picture)
     
-    # Copy all post media
-    total_media = 0
-    processed_media = 0
-    
-    # Count total media files first
-    for timestamp, post in post_data.items():
-        total_media += len(post['media'])
-    
-    print(f"Generating thumbnails for {total_media} media files...", file=sys.stderr)
-    
-    # Process each media file
+    # Collect all media files to process
+    all_media = []
     for timestamp, post in post_data.items():
         for media_url in post['media']:
-            copy_file_to_distribution(media_url)
+            all_media.append(media_url)
+    
+    total_media = len(all_media)
+    print(f"Generating thumbnails for {total_media} media files using {thread_count} threads...", file=sys.stderr)
+    
+    # Process media files in parallel using a thread pool
+    processed_media = 0
+    
+    # Create a lock for thread-safe progress updates
+    progress_lock = threading.Lock()
+    
+    def process_media_file(media_url):
+        nonlocal processed_media
+        copy_file_to_distribution(media_url)
+        
+        # Update progress (thread-safe)
+        with progress_lock:
             processed_media += 1
-            
-            # Show progress
             if processed_media % 10 == 0 or processed_media == total_media:
                 percent = round((processed_media / total_media) * 100)
                 print(f"Progress: {processed_media}/{total_media} ({percent}%)", file=sys.stderr)
+    
+    # Use ThreadPoolExecutor to process files in parallel
+    with ThreadPoolExecutor(max_workers=thread_count) as executor:
+        executor.map(process_media_file, all_media)
     
     # Count how many thumbnails and WebP conversions were successfully generated
     thumbnail_count = 0
@@ -528,6 +545,16 @@ def verify_images_in_html(html_content):
             print(f"WARNING: {missing_images - fixed_images} images could not be fixed.", file=sys.stderr)
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Process Instagram data and generate a static website.')
+    parser.add_argument('--threads', type=int, default=max(1, multiprocessing.cpu_count() - 1),
+                        help='Number of threads to use for processing (default: CPU count - 1)')
+    args = parser.parse_args()
+    
+    # Set the thread count for later use
+    thread_count = args.threads
+    print(f"Using {thread_count} threads for processing", file=sys.stderr)
+    
     # Set timezone
     os.environ['TZ'] = 'America/New_York'
     time.tzset()
@@ -586,7 +613,7 @@ def main():
     first_timestamp = datetime.utcfromtimestamp(int(last_key)).strftime("%B %Y")
     
     # Copy media files and generate thumbnails first
-    copy_media_files(post_data, profile_picture)
+    copy_media_files(post_data, profile_picture, thread_count)
     
     # Generate HTML content
     html_content = f'''
