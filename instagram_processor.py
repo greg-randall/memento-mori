@@ -514,7 +514,7 @@ def extract_relevant_data(combined_data):
 
             post_entry['creation_timestamp_readable'] = datetime.utcfromtimestamp(
                 post_entry['creation_timestamp_unix']
-            ).strftime("%B %d, %Y \\at %I:%M %p")
+            ).strftime("%B %d, %Y at %I:%M %p")
             
             if 'title' in item['post_data']:
                 post_entry['title'] = item['post_data']['title']
