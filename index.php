@@ -95,10 +95,17 @@ function copy_media_files($post_data, $profile_picture) {
   fwrite(STDERR, "All media files and thumbnails processed.\n");
   fwrite(STDERR, "Successfully generated $thumbnail_count thumbnails.\n");
   fwrite(STDERR, "Successfully converted $webp_count images to WebP format.\n");
-  fwrite(STDERR, sprintf("Total space saved: %.2f MB (%.1f%%)\n", 
-      $space_saved_mb, 
-      $total_size_original > 0 ? (($total_size_original - $total_size_webp) / $total_size_original * 100) : 0
-  ));
+  
+  if ($total_size_original > 0) {
+      $percentage_saved = (($total_size_original - $total_size_webp) / $total_size_original * 100);
+      fwrite(STDERR, sprintf("Total space saved: %.2f MB (%.1f%%)\n", 
+          $space_saved_mb, 
+          $percentage_saved
+      ));
+  } else {
+      fwrite(STDERR, sprintf("Total space saved: %.2f MB (0.0%%)\n", $space_saved_mb));
+  }
+  
   echo "Media files copied to distribution folder.\n";
 }
 
