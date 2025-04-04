@@ -385,6 +385,10 @@ def render_instagram_grid(post_data, lazy_after=30):
     """
     output = ''
     
+    # Counters for summary statistics
+    thumbnails_used = 0
+    webp_versions_used = 0
+    
     # Process each post
     i = 1
     for timestamp, post in post_data.items():
@@ -415,14 +419,14 @@ def render_instagram_grid(post_data, lazy_after=30):
             if os.path.exists(os.path.join('distribution', thumb_path)):
                 # Use the thumbnail instead of the original
                 display_media = thumb_path
-                print(f"Using thumbnail for: {first_media}", file=sys.stderr)
+                thumbnails_used += 1
             else:
                 # Check if we have a WebP version of the original image
                 if not is_video:
                     webp_path = re.sub(r'\.(jpg|jpeg|png|gif)$', '.webp', first_media, flags=re.I)
                     if os.path.exists(os.path.join('distribution', webp_path)):
                         display_media = webp_path
-                        print(f"Using WebP version for: {first_media}", file=sys.stderr)
+                        webp_versions_used += 1
                 
                 # If it's a video, look for a thumbnail among all media items
                 if is_video:
@@ -468,6 +472,10 @@ def render_instagram_grid(post_data, lazy_after=30):
         
         output += '        </div>\n'
         i += 1
+    
+    # Print summary statistics
+    print(f"Used thumbnails for {thumbnails_used} posts", file=sys.stderr)
+    print(f"Used WebP versions for {webp_versions_used} posts", file=sys.stderr)
     
     return output
 
