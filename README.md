@@ -37,23 +37,47 @@ Memento Mori processes your Instagram data export and generates a static site wi
 
 ## Requirements
 
+### For PHP Version:
 - PHP 7.2+ with GD library and WebP support
 - Your Instagram data export (in the original folder structure)
 - For video thumbnail generation: FFmpeg (optional but recommended)
 - For HEIC file support: ImageMagick (optional)
+
+### For Python Version:
+- Python 3.6+
+- Required Python packages: Pillow, tqdm
+- For video thumbnail generation: OpenCV (`pip install opencv-python`)
+- Your Instagram data export (in the original folder structure)
 
 ## How to Use
 
 1. Request and download your Instagram data archive (Settings > Privacy and Security > Data Download)
 2. Extract the archive to a folder
 3. Place the Memento Mori files in the same folder as your extracted archive
-4. Run the PHP script:
-   - **Recommended for large archives**: Run from command line: `php index.php`
-   - For smaller archives: Access through a web server
+4. Choose one of the following methods to run the tool:
+
+### Using Python (Recommended):
+```bash
+# Install required packages
+pip install pillow tqdm opencv-python
+
+# Run the script (with progress bars)
+python instagram_processor.py
+
+# For multi-threading with specific thread count:
+python instagram_processor.py --threads 8
+```
+
+### Using PHP:
+```bash
+# Run from command line
+php index.php
+```
+
 5. A `distribution` folder will be created containing your Instagram archive viewer and media files
 6. Open `distribution/index.html` in your browser or upload the entire distribution folder to your web hosting
 
-**Note**: Processing can take significant time for large archives, especially during thumbnail generation and WebP conversion. The script will show progress in the command line.
+**Note**: Processing can take significant time for large archives, especially during thumbnail generation and WebP conversion. The Python version includes progress bars to help track the process and uses multi-threading for faster processing.
 
 ## Processing Details
 
@@ -64,6 +88,24 @@ During processing, Memento Mori:
 3. Generates thumbnails for all images and videos
 4. Creates a responsive HTML interface with your posts
 5. Organizes everything into a clean, standalone website
+
+## Python vs PHP Implementation
+
+Memento Mori offers two implementation options:
+
+### Python Version Advantages:
+- Faster processing with multi-threading support
+- Visual progress bars for better tracking
+- Better memory management for large archives
+- Easier installation of dependencies on most systems
+- More detailed logging and error handling
+
+### PHP Version Advantages:
+- No additional packages required if PHP is already installed
+- May be easier to run on shared hosting environments
+- Familiar for users with PHP experience
+
+Choose the implementation that works best for your environment and technical comfort level. Both versions produce identical output.
 
 ## Why This Exists
 
