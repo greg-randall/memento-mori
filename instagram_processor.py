@@ -119,7 +119,11 @@ def copy_media_files(post_data, profile_picture, thread_count=None):
     print("All media files and thumbnails processed.", file=sys.stderr)
     print(f"Successfully generated {thumbnail_count} thumbnails.", file=sys.stderr)
     print(f"Successfully converted {webp_count} images to WebP format.", file=sys.stderr)
-    print(f"Total space saved: {space_saved_mb:.2f} MB ({(total_size_original - total_size_webp) / total_size_original * 100:.1f}% if original > 0 else 0)%", file=sys.stderr)
+    if total_size_original > 0:
+        percentage_saved = (total_size_original - total_size_webp) / total_size_original * 100
+    else:
+        percentage_saved = 0
+    print(f"Total space saved: {space_saved_mb:.2f} MB ({percentage_saved:.1f}%)", file=sys.stderr)
     print("Media files copied to distribution folder.")
 
 def copy_file_to_distribution(file_path, quiet=False):
