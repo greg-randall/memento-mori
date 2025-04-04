@@ -187,15 +187,18 @@ def convert_to_webp(source_path, destination_path):
         else:
             # If WebP is larger or failed, use the original file
             os.unlink(destination_path)
-            jpg_destination = re.sub(r'\.webp$', '.jpg', destination_path)
-            shutil.copy2(source_path, jpg_destination)
+            # Use the original file extension instead of hardcoding to jpg
+            original_ext = os.path.splitext(source_path)[1]
+            original_destination = re.sub(r'\.webp$', original_ext, destination_path)
+            shutil.copy2(source_path, original_destination)
             print(f"WebP larger than original, using original: {source_path}", file=sys.stderr)
             return False
     except Exception as e:
         print(f"Error converting to WebP: {str(e)}", file=sys.stderr)
-        # Fall back to copying the original file
-        jpg_destination = re.sub(r'\.webp$', '.jpg', destination_path)
-        shutil.copy2(source_path, jpg_destination)
+        # Fall back to copying the original file with its original extension
+        original_ext = os.path.splitext(source_path)[1]
+        original_destination = re.sub(r'\.webp$', original_ext, destination_path)
+        shutil.copy2(source_path, original_destination)
         return False
 
 def generate_thumbnail(source_path, relative_path):
