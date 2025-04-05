@@ -4,6 +4,7 @@ import zipfile
 import tempfile
 import shutil
 from pathlib import Path
+from file_mapper import InstagramFileMapper
 
 
 class InstagramArchiveExtractor:
@@ -17,17 +18,7 @@ class InstagramArchiveExtractor:
     - Clean up temporary files after processing
     """
 
-    # Expected files in a valid Instagram export
-    REQUIRED_FILES = [
-        "personal_information/personal_information/personal_information.json",
-        "personal_information/information_about_you/profile_based_in.json",
-    ]
-
-    # Expected patterns for important files that might be in different locations
-    FILE_PATTERNS = {
-        "posts": ["**/content/posts*.json", "**/media/posts*.json"],
-        "insights": ["**/past_instagram_insights/posts.json"],
-    }
+    REQUIRED_FILES = ["profile", "location", "posts"]
 
     def __init__(self, input_path=None, output_path=None, cleanup=True):
         """
@@ -43,6 +34,7 @@ class InstagramArchiveExtractor:
         self.cleanup = cleanup
         self.temp_dir = None
         self.extraction_dir = None
+        self.file_mapper = None
         self.file_map = {}  # Maps required file types to their actual paths
 
     def auto_detect_archive(self, search_dir="."):
@@ -165,29 +157,25 @@ class InstagramArchiveExtractor:
     def validate_structure(self):
         """
         Validate the structure of the extracted content.
-
-        Returns:
-            bool: True if the structure is valid
         """
         if not self.extraction_dir or not os.path.exists(self.extraction_dir):
             return False
 
-        # Check for required files
-        for required_file in self.REQUIRED_FILES:
-            file_path = os.path.join(self.extraction_dir, required_file)
-            if not os.path.exists(file_path):
-                print(f"Required file not found: {required_file}")
-                return False
+        # Create file mapper
+        self.file_mapper = InstagramFileMapper(self.extraction_dir)
+        self.file_mapper.discover_all_files()
 
-        # Find and map important files that might be in different locations
-        self._map_important_files()
+        # Validate required files
+        valid, missing_files = self.file_mapper.validate_required_files(
+            self.REQUIRED_FILES
+        )
 
-        # Check if we found all required file types
-        for file_type in self.FILE_PATTERNS:
-            if file_type not in self.file_map:
-                print(f"Could not find any {file_type} files in the archive.")
-                return False
+        if not valid:
+            print(f"Missing required files: {', '.join(missing_files)}")
+            return False
 
+        # For backward compatibility, update self.file_map
+        self.file_map = self.file_mapper.file_map
         return True
 
     def _map_important_files(self):
