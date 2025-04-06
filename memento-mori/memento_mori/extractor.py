@@ -4,7 +4,7 @@ import zipfile
 import tempfile
 import shutil
 from pathlib import Path
-from file_mapper import InstagramFileMapper
+from .file_mapper import InstagramFileMapper
 
 
 class InstagramArchiveExtractor:

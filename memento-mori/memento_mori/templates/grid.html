@@ -1,0 +1,14 @@
+{# comment #} memento_mori/templates/grid.html {# endcomment #}
+{% for post in posts %}
+<div class="grid-item" data-index="{{ post.index }}">
+  <img src="{{ post.display_media }}" alt="Instagram post"{{ post.lazy_load }}>
+  {% if post.is_video %}
+  <div class="video-indicator">▶ Video</div>
+  {% endif %}
+  {% if post.media_count > 1 %}
+  <div class="multi-indicator">⊞ {{ post.media_count }}</div>
+  {% elif post.likes %}
+  <div class="likes-indicator">♥ {{ post.likes }}</div>
+  {% endif %}
+</div>
+{% endfor %}
