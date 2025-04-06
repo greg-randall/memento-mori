@@ -25,8 +25,8 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="./distribution",
-        help="Output directory for generated website [default: ./distribution]",
+        default="./output",
+        help="Output directory for generated website [default: ./output]",
     )
     parser.add_argument(
         "--threads",
