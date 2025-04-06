@@ -3,5 +3,22 @@
 *.tar
 *.gz
 *.tar.gz
-*/*
 .aider*
+
+# Builds and Downloads
+output/
+instagram*/
+
+# Virtual Environments
+venv/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.cpython-*
+
+# System Files
+.DS_Store

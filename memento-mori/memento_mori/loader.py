@@ -1,9 +1,7 @@
 # memento_mori/loader.py
-import os
 import json
-import re
 from datetime import datetime
-from pathlib import Path
+import html
 
 
 class InstagramDataLoader:
@@ -246,7 +244,7 @@ class InstagramDataLoader:
                 ).strftime("%B %d, %Y at %I:%M %p")
 
                 if "title" in item["post_data"]:
-                    post_entry["title"] = item["post_data"]["title"]
+                    post_entry["title"] = html.unescape(item["post_data"]["title"])
 
                 # Extract media URIs
                 if "media" in item["post_data"]:
