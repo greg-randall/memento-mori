@@ -392,7 +392,11 @@ document.addEventListener('DOMContentLoaded', function () {
         postMedia.appendChild(mediaContainer);
 
         // Set post caption
-        postCaption.textContent = post.title || '';
+        if (post.title) {
+            postCaption.innerHTML = post.title.replace(/\n/g, '<br>');
+        } else {
+            postCaption.innerHTML = '';
+        }
 
         // Set post stats
         if (post.Impressions) {

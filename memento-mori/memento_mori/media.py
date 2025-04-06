@@ -119,7 +119,7 @@ class InstagramMediaProcessor:
                             self.total_size_original += original_size
                             self.total_size_webp += webp_size
 
-    def copy_file_to_distribution(self, file_path, quiet=False):
+    def copy_file_to_distribution(self, file_path, quiet=True):
         """Copy a file to distribution, optionally converting images to WebP and generating thumbnails."""
         # Skip if it's already a data URI
         if str(file_path).startswith("data:image"):
