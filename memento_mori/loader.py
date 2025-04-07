@@ -283,6 +283,7 @@ class InstagramDataLoader:
 
                 # Get title from post data
                 post_title = ""
+                # Check for title directly in post_data
                 if "title" in item["post_data"] and item["post_data"]["title"]:
                     post_title = item["post_data"]["title"]
                     if isinstance(post_title, str):
@@ -290,6 +291,16 @@ class InstagramDataLoader:
                         post_title = fix_text(post_title)
                         # Then unescape HTML entities
                         post_title = html.unescape(post_title)
+                
+                # Check for title in media items
+                if not post_title and "media" in item["post_data"]:
+                    for media_item in item["post_data"]["media"]:
+                        if "title" in media_item and media_item["title"]:
+                            post_title = media_item["title"]
+                            if isinstance(post_title, str):
+                                post_title = fix_text(post_title)
+                                post_title = html.unescape(post_title)
+                            break  # Use the first media item with a title
 
                 # Extract media URIs
                 if "media" in item["post_data"]:
@@ -331,12 +342,22 @@ class InstagramDataLoader:
                             insights_title = fix_text(insights_title)
                             insights_title = html.unescape(insights_title)
                 
-                # Also check for title directly in insights
-                elif "title" in insights and insights["title"]:
+                # Check for title directly in insights
+                if not insights_title and "title" in insights and insights["title"]:
                     insights_title = insights["title"]
                     if isinstance(insights_title, str):
                         insights_title = fix_text(insights_title)
                         insights_title = html.unescape(insights_title)
+                
+                # Check for title in media_map_data
+                if not insights_title and "media_map_data" in insights:
+                    for media_key, media_data in insights["media_map_data"].items():
+                        if "title" in media_data and media_data["title"]:
+                            insights_title = media_data["title"]
+                            if isinstance(insights_title, str):
+                                insights_title = fix_text(insights_title)
+                                insights_title = html.unescape(insights_title)
+                            break  # Use the first media item with a title
 
             # Use the longer or non-empty title between post data and insights
             if post_title and insights_title:
