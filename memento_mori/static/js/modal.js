@@ -618,3 +618,80 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Post data not available');
     }
 });
+
+
+
+
+
+/**
+ * Fixes common Unicode encoding issues in text
+ * @param {string} text - The text to fix
+ * @return {string} - The fixed text
+ */
+function fixEncodingIssues(text) {
+    if (!text) return text;
+    
+    // Common replacements for incorrectly encoded characters
+    const replacements = [
+      // Fix smart quotes and apostrophes
+      { pattern: /â\u0080\u0099/g, replacement: "\u2019" },  // Right single quote/apostrophe
+      { pattern: /â\u0080\u009c/g, replacement: "\u201C" },  // Left double quote
+      { pattern: /â\u0080\u009d/g, replacement: "\u201D" },  // Right double quote
+      { pattern: /â\u0080\u0098/g, replacement: "\u2018" },  // Left single quote
+      
+      // Fix dashes and ellipsis
+      { pattern: /â\u0080\u0093/g, replacement: "\u2013" },  // En dash
+      { pattern: /â\u0080\u0094/g, replacement: "\u2014" },  // Em dash
+      { pattern: /â\u0080¦/g,   replacement: "\u2026" },      // Ellipsis
+      
+      // Remove non-breaking space indicator
+      { pattern: /Â/g, replacement: "" },
+      
+      // Fix fractions
+      { pattern: /Â½/g, replacement: "\u00BD" },             // Half fraction
+  
+      // Fix bullet point
+      { pattern: /â€¢/g, replacement: "•" },
+  
+      // Fix common mis-encoded accented characters
+      { pattern: /Ã©/g, replacement: "é" },
+      { pattern: /Ã¨/g, replacement: "è" },
+      { pattern: /Ã¢/g, replacement: "â" },
+      { pattern: /Ãª/g, replacement: "ê" },
+      { pattern: /Ã«/g, replacement: "ë" },
+      { pattern: /Ã®/g, replacement: "î" },
+      { pattern: /Ã¯/g, replacement: "ï" },
+      { pattern: /Ã´/g, replacement: "ô" },
+      { pattern: /Ã¶/g, replacement: "ö" },
+      { pattern: /Ã¹/g, replacement: "ù" },
+      { pattern: /Ãº/g, replacement: "ú" },
+      { pattern: /Ã¼/g, replacement: "ü" },
+      { pattern: /Ã§/g, replacement: "ç" }
+    ];
+    
+    // Apply all replacements
+    let fixedText = text;
+    for (const { pattern, replacement } of replacements) {
+      fixedText = fixedText.replace(pattern, replacement);
+    }
+  
+    return fixedText;
+  }
+    
+  // Apply the fix to all post captions when the page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    // Fix the JSON data directly
+    for (const timestamp in window.postData) {
+      const post = window.postData[timestamp];
+      if (post.title) {
+        post.title = fixEncodingIssues(post.title);
+      }
+    }
+    
+    // Update any already rendered content
+    const captions = document.querySelectorAll('.post-caption');
+    captions.forEach(caption => {
+      caption.textContent = fixEncodingIssues(caption.textContent);
+    });
+  });
+  
