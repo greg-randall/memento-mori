@@ -165,19 +165,35 @@ class InstagramDataLoader:
 
         try:
             with open(insights_path, "r", encoding="utf-8") as f:
-                insights_raw = json.load(f)
+                file_content = f.read()
+                # Fix encoding issues
+                file_content = fix_text(file_content)
+                insights_raw = json.loads(file_content, strict=False)
 
             # Index insights by timestamp
             insights_indexed = {}
-            for insight in insights_raw.get("organic_insights_posts", []):
-                if (
-                    "media_map_data" in insight
-                    and "Media Thumbnail" in insight["media_map_data"]
-                ):
-                    timestamp = insight["media_map_data"]["Media Thumbnail"][
-                        "creation_timestamp"
-                    ]
-                    insights_indexed[timestamp] = insight
+            
+            # Handle different possible structures
+            if "organic_insights_posts" in insights_raw:
+                for insight in insights_raw.get("organic_insights_posts", []):
+                    timestamp = None
+                    
+                    # Try to get timestamp from media_map_data
+                    if "media_map_data" in insight and "Media Thumbnail" in insight["media_map_data"]:
+                        timestamp = insight["media_map_data"]["Media Thumbnail"].get("creation_timestamp")
+                    
+                    # If no timestamp yet, try other fields
+                    if not timestamp and "creation_timestamp" in insight:
+                        timestamp = insight["creation_timestamp"]
+                    
+                    if timestamp:
+                        insights_indexed[str(timestamp)] = insight
+            else:
+                # Try alternative structure
+                for insight in insights_raw:
+                    if isinstance(insight, dict) and "creation_timestamp" in insight:
+                        timestamp = insight["creation_timestamp"]
+                        insights_indexed[str(timestamp)] = insight
 
             self.insights_data = insights_indexed
             return insights_indexed
@@ -200,15 +216,24 @@ class InstagramDataLoader:
             self.load_insights_data()
 
         combined = []
+        
+        # Create a mapping of timestamps to insights for faster lookup
+        insights_map = {}
+        for timestamp, insight in self.insights_data.items():
+            insights_map[str(timestamp)] = insight
 
         for post in self.posts_data:
             try:
                 # Get the timestamp from the first media item
-                timestamp = post["media"][0]["creation_timestamp"]
-
+                timestamp = None
+                if "media" in post and len(post["media"]) > 0 and "creation_timestamp" in post["media"][0]:
+                    timestamp = str(post["media"][0]["creation_timestamp"])
+                elif "creation_timestamp" in post:
+                    timestamp = str(post["creation_timestamp"])
+                
                 # Find associated insights
-                insight = self.insights_data.get(timestamp)
-
+                insight = insights_map.get(timestamp) if timestamp else None
+                
                 # Create combined entry
                 combined.append({"post_data": post, "insights": insight})
             except (IndexError, KeyError) as e:
@@ -247,32 +272,24 @@ class InstagramDataLoader:
             # Extract post-level data
             if "post_data" in item:
                 if "creation_timestamp" in item["post_data"]:
-                    post_entry["creation_timestamp_unix"] = item["post_data"][
-                        "creation_timestamp"
-                    ]
-                elif (
-                    "media" in item["post_data"]
-                    and len(item["post_data"]["media"]) > 0
-                    and "creation_timestamp" in item["post_data"]["media"][0]
-                ):
+                    post_entry["creation_timestamp_unix"] = item["post_data"]["creation_timestamp"]
+                elif "media" in item["post_data"] and len(item["post_data"]["media"]) > 0 and "creation_timestamp" in item["post_data"]["media"][0]:
                     # Fallback to first media item timestamp if post timestamp not available
-                    post_entry["creation_timestamp_unix"] = item["post_data"]["media"][
-                        0
-                    ]["creation_timestamp"]
+                    post_entry["creation_timestamp_unix"] = item["post_data"]["media"][0]["creation_timestamp"]
 
                 post_entry["creation_timestamp_readable"] = datetime.utcfromtimestamp(
                     post_entry["creation_timestamp_unix"]
                 ).strftime("%B %d, %Y at %I:%M %p")
 
-                if "title" in item["post_data"]:
-                    title = item["post_data"]["title"]
-                    if isinstance(title, str):
+                # Get title from post data
+                post_title = ""
+                if "title" in item["post_data"] and item["post_data"]["title"]:
+                    post_title = item["post_data"]["title"]
+                    if isinstance(post_title, str):
                         # Use ftfy to fix text encoding issues
-                        title = fix_text(title)
+                        post_title = fix_text(post_title)
                         # Then unescape HTML entities
-                        title = html.unescape(title)
-                    
-                    post_entry["title"] = title
+                        post_title = html.unescape(post_title)
 
                 # Extract media URIs
                 if "media" in item["post_data"]:
@@ -283,36 +300,51 @@ class InstagramDataLoader:
                             post_entry["media"].append("")
 
             # Get insights data if available
-            if (
-                "insights" in item
-                and item["insights"]
-                and "string_map_data" in item["insights"]
-            ):
-                insights = item["insights"]["string_map_data"]
+            insights_title = ""
+            if "insights" in item and item["insights"]:
+                insights = item["insights"]
+                
+                # Try to get caption from insights
+                if "string_map_data" in insights:
+                    insights_data = insights["string_map_data"]
+                    
+                    # Extract specific metrics and ensure they're integers or blank
+                    if "Impressions" in insights_data:
+                        impressions = insights_data["Impressions"].get("value", "")
+                        # Validate and convert to integer if numeric, otherwise leave blank
+                        post_entry["Impressions"] = int(impressions) if impressions and impressions.isdigit() else ""
 
-                # Extract specific metrics and ensure they're integers or blank
-                if "Impressions" in insights:
-                    impressions = insights["Impressions"].get("value", "")
-                    # Validate and convert to integer if numeric, otherwise leave blank
-                    post_entry["Impressions"] = (
-                        int(impressions)
-                        if impressions and impressions.isdigit()
-                        else ""
-                    )
+                    if "Likes" in insights_data:
+                        likes = insights_data["Likes"].get("value", "")
+                        # Validate and convert to integer if numeric, otherwise leave blank
+                        post_entry["Likes"] = int(likes) if likes and likes.isdigit() else ""
 
-                if "Likes" in insights:
-                    likes = insights["Likes"].get("value", "")
-                    # Validate and convert to integer if numeric, otherwise leave blank
-                    post_entry["Likes"] = (
-                        int(likes) if likes and likes.isdigit() else ""
-                    )
+                    if "Comments" in insights_data:
+                        comments = insights_data["Comments"].get("value", "")
+                        # Validate and convert to integer if numeric, otherwise leave blank
+                        post_entry["Comments"] = int(comments) if comments and comments.isdigit() else ""
+                    
+                    # Try to get caption from insights
+                    if "Caption" in insights_data and insights_data["Caption"].get("value"):
+                        insights_title = insights_data["Caption"].get("value", "")
+                        if isinstance(insights_title, str):
+                            insights_title = fix_text(insights_title)
+                            insights_title = html.unescape(insights_title)
+                
+                # Also check for title directly in insights
+                elif "title" in insights and insights["title"]:
+                    insights_title = insights["title"]
+                    if isinstance(insights_title, str):
+                        insights_title = fix_text(insights_title)
+                        insights_title = html.unescape(insights_title)
 
-                if "Comments" in insights:
-                    comments = insights["Comments"].get("value", "")
-                    # Validate and convert to integer if numeric, otherwise leave blank
-                    post_entry["Comments"] = (
-                        int(comments) if comments and comments.isdigit() else ""
-                    )
+            # Use the longer or non-empty title between post data and insights
+            if post_title and insights_title:
+                post_entry["title"] = post_title if len(post_title) >= len(insights_title) else insights_title
+            elif post_title:
+                post_entry["title"] = post_title
+            elif insights_title:
+                post_entry["title"] = insights_title
 
             simplified_data[post_entry["creation_timestamp_unix"]] = post_entry
 
