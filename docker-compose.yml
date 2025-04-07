@@ -1,0 +1,9 @@
+services:
+  memento-mori:
+    build: .
+    volumes:
+      - ./:/app/workspace
+      - ./output:/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: --search-dir /app/workspace --output /output

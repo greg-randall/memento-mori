@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memento-mori"
+version = "0.1.0"
+description = "Transform Instagram data export into a viewer"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = [
+    "Pillow==11.1.0",
+    "tqdm==4.67.1",
+    "jinja2==3.1.6",
+    "opencv-python==4.11.0.86"
+]
+
+[project.scripts]
+memento-mori = "memento_mori.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/greg-randall/memento-mori"
+"Bug Tracker" = "https://github.com/greg-randall/memento-mori/issues"
