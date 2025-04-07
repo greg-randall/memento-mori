@@ -7,6 +7,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import re
 import hashlib
+import base64
 
 
 class InstagramSiteGenerator:
@@ -111,6 +112,16 @@ class InstagramSiteGenerator:
         location_info = self.data_package.get("location", {"location": "Unknown"})
         date_range = self.data_package["date_range"]["range"]
         post_count = self.data_package["post_count"]
+        
+        # Get profile picture path and check for WebP version
+        profile_picture = profile_info["profile_picture"]
+        
+        # Check if we have a WebP version of the profile picture
+        if profile_picture:
+            import re
+            webp_path = re.sub(r"\.(jpg|jpeg|png|gif)$", ".webp", profile_picture, flags=re.I)
+            if os.path.exists(os.path.join(self.output_dir, webp_path)):
+                profile_picture = webp_path
 
         # Current date for footer
         generation_date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -119,7 +130,7 @@ class InstagramSiteGenerator:
         template = self.jinja_env.get_template("index.html")
         html_content = template.render(
             username=profile_info["username"],
-            profile_picture=profile_info["profile_picture"],
+            profile_picture=profile_picture,
             date_range=date_range,
             post_count=post_count,
             grid_html=grid_html,
