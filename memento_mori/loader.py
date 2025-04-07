@@ -5,6 +5,30 @@ from datetime import datetime
 import html
 
 
+def fix_double_encoded_utf8(text):
+    """
+    Fix double-encoded UTF-8 sequences in text.
+    This handles cases where UTF-8 characters (like emoji) were incorrectly encoded twice.
+    """
+    if not isinstance(text, str):
+        return text
+        
+    # Pattern to find escaped Unicode sequences like \u00f0\u009f\u0098\u0085
+    pattern = r'\\u([0-9a-fA-F]{4})'
+    
+    # Function to convert each match to the actual Unicode character
+    def unescape(match):
+        try:
+            # Convert the hex code to an integer and then to a Unicode character
+            return chr(int(match.group(1), 16))
+        except:
+            # Return the original if conversion fails
+            return match.group(0)
+    
+    # Replace all escaped Unicode sequences
+    return re.sub(pattern, unescape, text)
+
+
 class InstagramDataLoader:
     """
     Class for loading and processing Instagram data from the exported archive.
@@ -124,8 +148,8 @@ class InstagramDataLoader:
                     # Read the file content first
                     file_content = f.read()
                     
-                    # Replace problematic Unicode sequences before parsing JSON
-                    file_content = file_content.replace('\\u00f0\\u009f', '😀')
+                    # Fix double-encoded UTF-8 sequences
+                    file_content = fix_double_encoded_utf8(file_content)
                     
                     # Parse the modified content
                     posts_data = json.loads(file_content, strict=False)
@@ -257,12 +281,8 @@ class InstagramDataLoader:
                         # First unescape HTML entities
                         title = html.unescape(title)
                         
-                        # Fix mojibake: Replace common corrupted emoji patterns
-                        # The sequence "ð" followed by another character is typically a corrupted emoji
-                        title = re.sub(r'ð[\u0080-\u00ff]', '😊', title)  # Replace with a generic emoji
-                        
-                        # Also handle the specific case in your example
-                        title = re.sub(r'ð\u0098\u0085', '😊', title)
+                        # Fix double-encoded UTF-8 sequences
+                        title = fix_double_encoded_utf8(title)
                         
                         # Normalize Unicode to composed form (NFC)
                         import unicodedata
@@ -315,6 +335,24 @@ class InstagramDataLoader:
         # Sort by timestamp (newest first)
         return dict(sorted(simplified_data.items(), key=lambda x: x[0], reverse=True))
 
+    def process_json_strings(self, data):
+        """
+        Recursively process all string values in JSON data to fix encoding issues.
+        """
+        if isinstance(data, dict):
+            return {k: self.process_json_strings(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self.process_json_strings(item) for item in data]
+        elif isinstance(data, str):
+            # Apply all string fixes
+            fixed = html.unescape(data)
+            fixed = fix_double_encoded_utf8(fixed)
+            import unicodedata
+            fixed = unicodedata.normalize('NFC', fixed)
+            return fixed
+        else:
+            return data
+
     def load_all_data(self):
         """
         Load all data and return a comprehensive data package.
@@ -325,6 +363,11 @@ class InstagramDataLoader:
         profile_info = self.load_profile_data()
         location_info = self.load_location_data()
         posts_data = self.extract_relevant_data()
+        
+        # Process all string values to fix encoding issues
+        profile_info = self.process_json_strings(profile_info)
+        location_info = self.process_json_strings(location_info)
+        posts_data = self.process_json_strings(posts_data)
 
         # Get date range for display
         if posts_data:
