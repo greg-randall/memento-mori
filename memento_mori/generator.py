@@ -4,7 +4,7 @@ import json
 import shutil
 import datetime
 from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, Markup
 import re
 import hashlib
 import base64
@@ -162,7 +162,7 @@ class InstagramSiteGenerator:
                     "is_video": display_media["is_video"],
                     "media_count": len(post["media"]),
                     "likes": post.get("Likes", ""),
-                    "lazy_load": ' loading="lazy"' if i >= lazy_after else "",
+                    "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
                 }
             )
 
