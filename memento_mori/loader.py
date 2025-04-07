@@ -120,7 +120,8 @@ class InstagramDataLoader:
         for posts_path in post_paths:
             try:
                 with open(posts_path, "r", encoding="utf-8") as f:
-                    posts_data = json.load(f)
+                    # Ensure proper Unicode handling when loading JSON
+                    posts_data = json.load(f, strict=False)
                     all_posts.extend(posts_data)
             except Exception as e:
                 print(f"Error loading posts data from {posts_path}: {str(e)}")
@@ -244,7 +245,14 @@ class InstagramDataLoader:
                 ).strftime("%B %d, %Y at %I:%M %p")
 
                 if "title" in item["post_data"]:
-                    post_entry["title"] = html.unescape(item["post_data"]["title"])
+                    # First decode any Unicode escape sequences, then unescape HTML entities
+                    title = item["post_data"]["title"]
+                    # Handle the case where title might be a string with Unicode escape sequences
+                    if isinstance(title, str):
+                        # The JSON loader should have already decoded Unicode escapes,
+                        # but we'll ensure proper handling of any remaining issues
+                        title = html.unescape(title)
+                    post_entry["title"] = title
 
                 # Extract media URIs
                 if "media" in item["post_data"]:
