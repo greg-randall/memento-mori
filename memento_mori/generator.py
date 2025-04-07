@@ -134,7 +134,7 @@ class InstagramSiteGenerator:
             date_range=date_range,
             post_count=post_count,
             grid_html=grid_html,
-            post_data_json=json.dumps(self.data_package["posts"]),
+            post_data_json=json.dumps(self.data_package["posts"], ensure_ascii=False),
             generation_date=generation_date,
         )
 
