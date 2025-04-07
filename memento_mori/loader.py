@@ -257,28 +257,28 @@ class InstagramDataLoader:
         simplified_data = {}
 
         for index, item in enumerate(self.combined_data):
-            # Initialize a new post entry
+            # Initialize a new post entry with shortened keys
             post_entry = {
-                "post_index": index,
-                "media": [],
-                "creation_timestamp_unix": "",
-                "creation_timestamp_readable": "",
-                "title": "",
-                "Impressions": "",
-                "Likes": "",
-                "Comments": "",
+                "i": index,  # post_index
+                "m": [],     # media
+                "t": "",     # creation_timestamp_unix
+                "d": "",     # creation_timestamp_readable
+                "tt": "",    # title
+                "im": "",    # Impressions
+                "l": "",     # Likes
+                "c": "",     # Comments
             }
 
             # Extract post-level data
             if "post_data" in item:
                 if "creation_timestamp" in item["post_data"]:
-                    post_entry["creation_timestamp_unix"] = item["post_data"]["creation_timestamp"]
+                    post_entry["t"] = item["post_data"]["creation_timestamp"]
                 elif "media" in item["post_data"] and len(item["post_data"]["media"]) > 0 and "creation_timestamp" in item["post_data"]["media"][0]:
                     # Fallback to first media item timestamp if post timestamp not available
-                    post_entry["creation_timestamp_unix"] = item["post_data"]["media"][0]["creation_timestamp"]
+                    post_entry["t"] = item["post_data"]["media"][0]["creation_timestamp"]
 
-                post_entry["creation_timestamp_readable"] = datetime.utcfromtimestamp(
-                    post_entry["creation_timestamp_unix"]
+                post_entry["d"] = datetime.utcfromtimestamp(
+                    post_entry["t"]
                 ).strftime("%B %d, %Y at %I:%M %p")
 
                 # Get title from post data
@@ -306,9 +306,9 @@ class InstagramDataLoader:
                 if "media" in item["post_data"]:
                     for media in item["post_data"]["media"]:
                         if "uri" in media:
-                            post_entry["media"].append(media["uri"])
+                            post_entry["m"].append(media["uri"])
                         else:
-                            post_entry["media"].append("")
+                            post_entry["m"].append("")
 
             # Get insights data if available
             insights_title = ""
@@ -323,17 +323,17 @@ class InstagramDataLoader:
                     if "Impressions" in insights_data:
                         impressions = insights_data["Impressions"].get("value", "")
                         # Validate and convert to integer if numeric, otherwise leave blank
-                        post_entry["Impressions"] = int(impressions) if impressions and impressions.isdigit() else ""
+                        post_entry["im"] = int(impressions) if impressions and impressions.isdigit() else ""
 
                     if "Likes" in insights_data:
                         likes = insights_data["Likes"].get("value", "")
                         # Validate and convert to integer if numeric, otherwise leave blank
-                        post_entry["Likes"] = int(likes) if likes and likes.isdigit() else ""
+                        post_entry["l"] = int(likes) if likes and likes.isdigit() else ""
 
                     if "Comments" in insights_data:
                         comments = insights_data["Comments"].get("value", "")
                         # Validate and convert to integer if numeric, otherwise leave blank
-                        post_entry["Comments"] = int(comments) if comments and comments.isdigit() else ""
+                        post_entry["c"] = int(comments) if comments and comments.isdigit() else ""
                     
                     # Try to get caption from insights
                     if "Caption" in insights_data and insights_data["Caption"].get("value"):
@@ -361,13 +361,13 @@ class InstagramDataLoader:
 
             # Use the longer or non-empty title between post data and insights
             if post_title and insights_title:
-                post_entry["title"] = post_title if len(post_title) >= len(insights_title) else insights_title
+                post_entry["tt"] = post_title if len(post_title) >= len(insights_title) else insights_title
             elif post_title:
-                post_entry["title"] = post_title
+                post_entry["tt"] = post_title
             elif insights_title:
-                post_entry["title"] = insights_title
+                post_entry["tt"] = insights_title
 
-            simplified_data[post_entry["creation_timestamp_unix"]] = post_entry
+            simplified_data[post_entry["t"]] = post_entry
 
         # Sort by timestamp (newest first)
         return dict(sorted(simplified_data.items(), key=lambda x: x[0], reverse=True))

@@ -158,11 +158,11 @@ class InstagramSiteGenerator:
 
             grid_posts.append(
                 {
-                    "index": post["post_index"],
+                    "index": post["i"],
                     "display_media": display_media["url"],
                     "is_video": display_media["is_video"],
-                    "media_count": len(post["media"]),
-                    "likes": post.get("Likes", ""),
+                    "media_count": len(post["m"]),
+                    "likes": post.get("l", ""),
                     "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
                 }
             )
@@ -175,10 +175,10 @@ class InstagramSiteGenerator:
         """Determine which media to use for the grid thumbnail."""
         result = {"url": "", "is_video": False}
 
-        if not post["media"] or len(post["media"]) == 0:
+        if not post["m"] or len(post["m"]) == 0:
             return result
 
-        first_media = post["media"][0]
+        first_media = post["m"][0]
         result["url"] = first_media
 
         # Check if first media is a video
@@ -208,7 +208,7 @@ class InstagramSiteGenerator:
             if (
                 result["is_video"] and result["url"] == first_media
             ):  # No thumbnail found yet
-                for media_item in post["media"]:
+                for media_item in post["m"]:
                     if re.search(r"\.(jpg|jpeg|png|webp|gif)$", media_item, re.I):
                         # Check if we have a thumbnail for this image
                         img_thumb_filename = (
