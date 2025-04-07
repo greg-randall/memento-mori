@@ -4,7 +4,8 @@ import json
 import shutil
 import datetime
 from pathlib import Path
-from jinja2 import Environment, FileSystemLoader, Markup
+from jinja2 import Environment, FileSystemLoader
+from markupsafe import Markup
 import re
 import hashlib
 import base64
