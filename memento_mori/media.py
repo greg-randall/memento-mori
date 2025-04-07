@@ -53,7 +53,7 @@ class InstagramMediaProcessor:
         # Collect all media files to process
         all_media = []
         for timestamp, post in post_data.items():
-            for media_url in post["media"]:
+            for media_url in post["m"]:  # Changed from media
                 all_media.append(media_url)
 
         total_media = len(all_media)
@@ -102,7 +102,7 @@ class InstagramMediaProcessor:
 
         # Calculate WebP savings
         for timestamp, post in post_data.items():
-            for media_url in post["media"]:
+            for media_url in post["m"]:  # Changed from media
                 if re.search(r"\.(jpg|jpeg|png|gif)$", str(media_url), re.I):
                     original_path = Path(self.extraction_dir) / media_url
                     webp_path = self.output_dir / re.sub(

@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function initialize() {
         // Create a mapping from post_index to timestamp
         Object.entries(window.postData).forEach(([timestamp, post]) => {
-            postIndexToTimestamp[post.post_index] = timestamp;
+            postIndexToTimestamp[post.i] = timestamp;  // Changed from post_index
         });
 
         // Attach click listeners to grid items
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getLikesByIndex(index) {
         const timestamp = postIndexToTimestamp[index];
         if (timestamp && window.postData[timestamp]) {
-            return parseInt(window.postData[timestamp].Likes) || 0;
+            return parseInt(window.postData[timestamp].l) || 0;  // Changed from Likes
         }
         return 0;
     }
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getCommentsByIndex(index) {
         const timestamp = postIndexToTimestamp[index];
         if (timestamp && window.postData[timestamp]) {
-            return parseInt(window.postData[timestamp].Comments) || 0;
+            return parseInt(window.postData[timestamp].c) || 0;  // Changed from Comments
         }
         return 0;
     }
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getViewsByIndex(index) {
         const timestamp = postIndexToTimestamp[index];
         if (timestamp && window.postData[timestamp]) {
-            return parseInt(window.postData[timestamp].Impressions) || 0;
+            return parseInt(window.postData[timestamp].im) || 0;  // Changed from Impressions
         }
         return 0;
     }
@@ -325,9 +325,9 @@ document.addEventListener('DOMContentLoaded', function () {
         mediaContainer.className = 'media-container';
 
         // Check if the post has multiple media
-        if (post.media && post.media.length > 1) {
+        if (post.m && post.m.length > 1) {  // Changed from media
             // Create slides for each media item
-            post.media.forEach((mediaUrl, index) => {
+            post.m.forEach((mediaUrl, index) => {  // Changed from media
                 const slide = document.createElement('div');
                 slide.className = `media-slide ${index === initialImageIndex ? 'active' : ''}`;
 
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
             slide.className = 'media-slide active';
 
             // Create and add the appropriate media element
-            const mediaElement = createMediaElement(post.media[0]);
+            const mediaElement = createMediaElement(post.m[0]);  // Changed from media
             slide.appendChild(mediaElement);
 
             mediaContainer.appendChild(slide);
@@ -392,45 +392,45 @@ document.addEventListener('DOMContentLoaded', function () {
         postMedia.appendChild(mediaContainer);
 
         // Set post caption
-        if (post.title) {
-            postCaption.innerHTML = post.title.replace(/\n/g, '<br>');
+        if (post.tt) {  // Changed from title
+            postCaption.innerHTML = post.tt.replace(/\n/g, '<br>');  // Changed from title
         } else {
             postCaption.innerHTML = '';
         }
 
         // Set post stats
-        if (post.Impressions) {
+        if (post.im) {  // Changed from Impressions
             const impressionsDiv = document.createElement('div');
             impressionsDiv.className = 'post-stat';
             impressionsDiv.innerHTML = `
                 <span class="post-stat-icon">👁️</span>
-                <span>${post.Impressions} views</span>
+                <span>${post.im} views</span>  <!-- Changed from Impressions -->
             `;
             postStats.appendChild(impressionsDiv);
         }
 
-        if (post.Likes) {
+        if (post.l) {  // Changed from Likes
             const likesDiv = document.createElement('div');
             likesDiv.className = 'post-stat';
             likesDiv.innerHTML = `
                 <span class="post-stat-icon">♥</span>
-                <span>${post.Likes}</span>
+                <span>${post.l}</span>  <!-- Changed from Likes -->
             `;
             postStats.appendChild(likesDiv);
         }
 
-        if (post.Comments) {
+        if (post.c) {  // Changed from Comments
             const commentsDiv = document.createElement('div');
             commentsDiv.className = 'post-stat';
             commentsDiv.innerHTML = `
                 <span class="post-stat-icon">💬</span>
-                <span>${post.Comments} comments</span>
+                <span>${post.c} comments</span>  <!-- Changed from Comments -->
             `;
             postStats.appendChild(commentsDiv);
         }
 
         // Set post date
-        postDate.textContent = post.creation_timestamp_readable;
+        postDate.textContent = post.d;  // Changed from creation_timestamp_readable
 
         // Show/hide stats container based on whether there are any stats
         postStats.style.display = postStats.children.length > 0 ? 'flex' : 'none';
@@ -683,8 +683,8 @@ function fixEncodingIssues(text) {
     // Fix the JSON data directly
     for (const timestamp in window.postData) {
       const post = window.postData[timestamp];
-      if (post.title) {
-        post.title = fixEncodingIssues(post.title);
+      if (post.tt) {  // Changed from title
+        post.tt = fixEncodingIssues(post.tt);  // Changed from title
       }
     }
     
