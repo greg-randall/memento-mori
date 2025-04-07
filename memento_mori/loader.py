@@ -3,30 +3,19 @@ import json
 import re
 from datetime import datetime
 import html
+from ftfy import fix_text
 
 
 def fix_double_encoded_utf8(text):
     """
-    Fix double-encoded UTF-8 sequences in text.
+    Fix double-encoded UTF-8 sequences in text using ftfy.
     This handles cases where UTF-8 characters (like emoji) were incorrectly encoded twice.
     """
     if not isinstance(text, str):
         return text
-        
-    # Pattern to find escaped Unicode sequences like \u00f0\u009f\u0098\u0085
-    pattern = r'\\u([0-9a-fA-F]{4})'
     
-    # Function to convert each match to the actual Unicode character
-    def unescape(match):
-        try:
-            # Convert the hex code to an integer and then to a Unicode character
-            return chr(int(match.group(1), 16))
-        except:
-            # Return the original if conversion fails
-            return match.group(0)
-    
-    # Replace all escaped Unicode sequences
-    return re.sub(pattern, unescape, text)
+    # Use ftfy to fix the text encoding issues
+    return fix_text(text)
 
 
 class InstagramDataLoader:
@@ -148,8 +137,8 @@ class InstagramDataLoader:
                     # Read the file content first
                     file_content = f.read()
                     
-                    # Fix double-encoded UTF-8 sequences
-                    file_content = fix_double_encoded_utf8(file_content)
+                    # Fix encoding issues with ftfy
+                    file_content = fix_text(file_content)
                     
                     # Parse the modified content
                     posts_data = json.loads(file_content, strict=False)
@@ -278,15 +267,10 @@ class InstagramDataLoader:
                 if "title" in item["post_data"]:
                     title = item["post_data"]["title"]
                     if isinstance(title, str):
-                        # First unescape HTML entities
+                        # Use ftfy to fix text encoding issues
+                        title = fix_text(title)
+                        # Then unescape HTML entities
                         title = html.unescape(title)
-                        
-                        # Fix double-encoded UTF-8 sequences
-                        title = fix_double_encoded_utf8(title)
-                        
-                        # Normalize Unicode to composed form (NFC)
-                        import unicodedata
-                        title = unicodedata.normalize('NFC', title)
                     
                     post_entry["title"] = title
 
@@ -345,10 +329,10 @@ class InstagramDataLoader:
             return [self.process_json_strings(item) for item in data]
         elif isinstance(data, str):
             # Apply all string fixes
-            fixed = html.unescape(data)
-            fixed = fix_double_encoded_utf8(fixed)
-            import unicodedata
-            fixed = unicodedata.normalize('NFC', fixed)
+            # Use ftfy to fix text encoding issues
+            fixed = fix_text(data)
+            # Still apply HTML unescaping after fixing encoding
+            fixed = html.unescape(fixed)
             return fixed
         else:
             return data
