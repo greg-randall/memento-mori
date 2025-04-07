@@ -20,11 +20,7 @@ Only share the generated output folder after processing with this tool.
 
 ## How It Works
 
-  
-
 Memento Mori processes your Instagram data export and generates a static site with your posts, copying all your media files into an organized structure that can be viewed offline or hosted on your own website.
-
-  
 
 ## Features
 - Displays your posts in a familiar Instagram-like grid
@@ -87,13 +83,15 @@ The CLI supports the following arguments:
 ```
 Options:
   --input PATH         Path to Instagram data (ZIP or folder). If not specified, auto-detection will be used.
-  --output PATH        Output directory for generated website [default: ./distribution]
+  --output PATH        Output directory for generated website [default: ./output]
   --threads INTEGER    Number of parallel processing threads [default: auto]
   --search-dir PATH    Directory to search for Instagram exports when auto-detecting [default: current directory]
   --quality INTEGER    WebP conversion quality (1-100) [default: 80]
   --thumbnail-size WxH Size of thumbnails [default: 292x292]
   --no-auto-detect     Disable auto-detection (requires --input to be specified)
 ```
+
+Note: Auto-detection is enabled by default and will look for Instagram exports in the current directory. Use `--no-auto-detect` if you want to disable this feature and specify an input path manually.
 
 ### Example Commands
 
@@ -112,6 +110,9 @@ python -m memento_mori.cli --search-dir ~/Downloads
 
 # Use custom thumbnail size
 python -m memento_mori.cli --thumbnail-size 400x400
+
+# Disable auto-detection (requires specifying input)
+python -m memento_mori.cli --no-auto-detect --input path/to/instagram-export.zip
 ```
 
 ## Key Features
