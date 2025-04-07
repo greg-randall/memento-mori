@@ -1,5 +1,6 @@
 # memento_mori/loader.py
 import json
+import re
 from datetime import datetime
 import html
 
@@ -256,9 +257,12 @@ class InstagramDataLoader:
                         # First unescape HTML entities
                         title = html.unescape(title)
                         
-                        # Handle specific problematic Unicode sequences
-                        # This replaces the common pattern for emoji that's showing up as "ð"
-                        title = title.replace('\u00f0\u009f', '😀')  # Replace with a generic emoji as placeholder
+                        # Fix mojibake: Replace common corrupted emoji patterns
+                        # The sequence "ð" followed by another character is typically a corrupted emoji
+                        title = re.sub(r'ð[\u0080-\u00ff]', '😊', title)  # Replace with a generic emoji
+                        
+                        # Also handle the specific case in your example
+                        title = re.sub(r'ð\u0098\u0085', '😊', title)
                         
                         # Normalize Unicode to composed form (NFC)
                         import unicodedata
