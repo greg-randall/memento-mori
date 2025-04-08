@@ -4,6 +4,8 @@ import shutil
 import hashlib
 import base64
 import re
+import mimetypes
+import magic  # python-magic library
 from pathlib import Path
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
@@ -286,6 +288,108 @@ class InstagramMediaProcessor:
             original_destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_path, original_destination)
             return False
+
+    def fix_file_extensions(self, directory_path):
+        """
+        Scan a directory for files with incorrect extensions and fix them.
+        Particularly focuses on HEIC files that are actually JPEGs.
+        
+        Args:
+            directory_path (str or Path): Directory to scan for files with incorrect extensions
+        
+        Returns:
+            dict: Statistics about the fixed files
+        """
+        directory_path = Path(directory_path)
+        stats = {
+            "total_checked": 0,
+            "fixed": 0,
+            "already_correct": 0,
+            "errors": 0,
+            "fixed_files": []
+        }
+        
+        # Make sure we have the mime-type libraries
+        if not hasattr(magic, "Magic"):
+            print("Please install python-magic: pip install python-magic")
+            if os.name == "nt":  # Windows
+                print("Windows users also need to install the binary from: https://github.com/ahupp/python-magic#windows")
+            return stats
+        
+        mime = magic.Magic(mime=True)
+        
+        # Mapping of MIME types to extensions
+        mime_to_ext = {
+            "image/jpeg": ".jpg",
+            "image/png": ".png",
+            "image/gif": ".gif",
+            "image/webp": ".webp",
+            "image/heic": ".heic",
+            "video/mp4": ".mp4",
+            "video/quicktime": ".mov",
+            "video/webm": ".webm"
+        }
+        
+        print(f"Scanning {directory_path} for files with incorrect extensions...")
+        
+        # Find all files recursively
+        for file_path in tqdm(list(directory_path.glob("**/*.*")), desc="Checking files"):
+            stats["total_checked"] += 1
+            
+            try:
+                # Skip directories
+                if file_path.is_dir():
+                    continue
+                    
+                # Get the current extension and mime type
+                current_ext = file_path.suffix.lower()
+                file_mime = mime.from_file(str(file_path))
+                
+                # Get the correct extension for this mime type
+                correct_ext = mime_to_ext.get(file_mime)
+                
+                if correct_ext is None:
+                    # If we don't have a mapping for this mime type, use mimetypes
+                    correct_ext = mimetypes.guess_extension(file_mime) or current_ext
+                
+                # If extensions don't match, rename the file
+                if correct_ext != current_ext:
+                    new_path = file_path.with_suffix(correct_ext)
+                    
+                    # Avoid overwriting existing files
+                    counter = 1
+                    while new_path.exists():
+                        new_stem = f"{file_path.stem}_{counter}"
+                        new_path = file_path.with_stem(new_stem).with_suffix(correct_ext)
+                        counter += 1
+                    
+                    # Rename the file
+                    file_path.rename(new_path)
+                    
+                    stats["fixed"] += 1
+                    stats["fixed_files"].append({
+                        "old_path": str(file_path),
+                        "new_path": str(new_path),
+                        "old_type": current_ext,
+                        "new_type": correct_ext
+                    })
+                    
+                    print(f"Fixed: {file_path} → {new_path} (was {current_ext}, actually {correct_ext})")
+                else:
+                    stats["already_correct"] += 1
+                    
+            except Exception as e:
+                print(f"Error processing {file_path}: {str(e)}")
+                stats["errors"] += 1
+        
+        # Print summary
+        print(f"\nExtension correction complete:")
+        print(f"  Total files checked: {stats['total_checked']}")
+        print(f"  Files fixed: {stats['fixed']}")
+        print(f"  Files already correct: {stats['already_correct']}")
+        print(f"  Errors: {stats['errors']}")
+        
+        return stats
 
     def generate_thumbnail(self, source_path, relative_path, quiet=False):
         """Generate a thumbnail for an image or video file."""
