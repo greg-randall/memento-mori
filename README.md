@@ -8,8 +8,9 @@
 Get your Instagram data export zip, throw it in with this code, and run this command:
 ```bash
 docker compose run --rm memento-mori
+#Then open output/index.html in your browser
 ```
-Then open output/index.html in your browser
+
 
 
 ## ⚠️ IMPORTANT SECURITY WARNING ⚠️
