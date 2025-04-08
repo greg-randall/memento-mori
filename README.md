@@ -22,21 +22,14 @@ Only share the generated output folder after processing with this tool.
 ## How It Works
 Memento Mori processes your Instagram data export and generates a static site with your posts, copying all your media files into an organized structure that can be viewed offline or hosted on your own website.
 
-## Features
-- Displays your posts in a familiar grid
-- Shows post details, like counts, and impression statistics when clicking on a post
-- Supports multiple images per post with carousel navigation
-- Plays videos with native controls
-- Fully responsive design that works on mobile and desktop
-- Converts images to WebP format for smaller file sizes (when beneficial)
-- Generates thumbnails for faster loading
-- Creates video thumbnails for better preview
-- Sorts posts by newest, oldest, most likes, most comments, most views, or randomly
-- Shareable links to specific posts and images
-- Copies all your media files to the distribution folder with shortened filenames for smaller HTML size
-- Fixes text encoding issues in captions and descriptions
-- Automatically detects and fixes mislabeled file formats (e.g., HEIC files that are actually JPEGs)
-- Provides user-friendly console output with clear progress indicators
+## Key Features
+- **Familiar Interface**: Grid layout with post details and carousel for multiple images
+- **Media Optimization**: Converts images to WebP, generates thumbnails, and supports video playback
+- **Organization**: Sorts posts by various criteria with shareable links to specific content
+- **Technical Improvements**:
+  - Fixes encoding issues and mislabeled file formats
+  - Shortens filenames for smaller HTML size
+  - Processes files in parallel with a responsive design that works on all devices
 
 ## How to Use Memento Mori
 
