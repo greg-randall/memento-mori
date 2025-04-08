@@ -105,23 +105,25 @@ def main():
 
     try:
         # Extract archive
-        print("Extracting archive...")
+        print("\n📦 EXTRACTING ARCHIVE")
+        print(f"   Source: {extractor.input_path}")
         extraction_dir = extractor.extract()
+        print(f"   Extracted to: {extraction_dir}")
 
         # Get file mapper from extractor
         file_mapper = extractor.file_mapper
 
         # Initialize loader with the same file mapper
-        print("Loading Instagram data...")
+        print("\n📋 LOADING DATA")
         loader = InstagramDataLoader(extraction_dir, file_mapper)
 
         # Load and process data
         data = loader.load_all_data()
+        print(f"   Found {data['post_count']} posts from {data['profile']['username']}")
 
         # Process media files
-        print(
-            f"Processing media with {args.threads} threads, quality {args.quality}..."
-        )
+        print(f"\n🖼️  PROCESSING MEDIA")
+        print(f"   Using {args.threads} threads, quality {args.quality}...")
         media_processor = InstagramMediaProcessor(
             extraction_dir, output_dir, thread_count=args.threads
         )
@@ -134,19 +136,25 @@ def main():
         data["profile"]["profile_picture"] = media_result["shortened_profile"]
 
         # Generate website with the loaded data
-        print("Generating website...")
+        print("\n🌐 GENERATING WEBSITE")
         generator = InstagramSiteGenerator(data, output_dir)
         success = generator.generate()
 
         if success:
-            print(f"\nComplete! Website generated at {output_dir}")
+            stats = media_result["stats"]
+            print("\n✅ PROCESS COMPLETE")
+            print(f"   Website generated at: {output_dir}")
+            print(f"   Posts processed: {data['post_count']}")
+            print(f"   Media files processed: {stats['thumbnail_count'] + stats['webp_count']}")
+            print(f"   Space saved: {stats['space_saved_mb']:.2f} MB ({stats['percentage_saved']:.1f}%)")
+            print(f"   Fixed file extensions: {stats['extension_fixes']}")
             return 0
         else:
-            print("\nError generating website.")
+            print("\n❌ ERROR: Failed to generate website.")
             return 1
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"\n❌ ERROR: {str(e)}")
         return 1
 
 

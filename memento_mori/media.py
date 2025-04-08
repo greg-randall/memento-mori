@@ -421,7 +421,8 @@ class InstagramMediaProcessor:
         
         # Print summary
         if stats["fixed"] > 0:
-            print(f"\nExtension correction complete: Fixed {stats['fixed']} files with incorrect extensions")
+            print(f"\n🔧 EXTENSION CORRECTION")
+            print(f"   Fixed {stats['fixed']} files with incorrect extensions")
             # Group fixes by type for a cleaner summary
             fixes_by_type = {}
             for item in stats["fixed_files"]:
@@ -432,12 +433,12 @@ class InstagramMediaProcessor:
             
             # Print summary by type
             for fix_type, count in fixes_by_type.items():
-                print(f"  {count} files: {fix_type}")
+                print(f"   • {count} files: {fix_type}")
         else:
-            print(f"\nExtension correction complete: All {stats['already_correct']} files had correct extensions")
+            print(f"\n✓ All {stats['already_correct']} files had correct extensions")
         
         if stats["errors"] > 0:
-            print(f"  Errors: {stats['errors']}")
+            print(f"   ⚠️ Errors: {stats['errors']}")
         
         # Add a path mapping to the stats
         stats["path_mapping"] = {item["old_path"]: item["new_path"] for item in stats["fixed_files"]}

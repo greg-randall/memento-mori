@@ -47,6 +47,9 @@ class InstagramArchiveExtractor:
         Returns:
             str: Path to the detected archive or None if not found
         """
+        print(f"🔍 DETECTING INSTAGRAM ARCHIVE")
+        print(f"   Searching in: {search_dir}")
+        
         # Look for ZIP files that might be Instagram archives
         potential_archives = []
 
@@ -59,17 +62,17 @@ class InstagramArchiveExtractor:
                         potential_archives.append(zip_path)
 
         if not potential_archives:
+            print("   No Instagram archives found.")
             return None
 
         # If multiple archives found, take the most recent one
         if len(potential_archives) > 1:
             # Sort by modification time (most recent first)
             potential_archives.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            print(
-                f"Multiple potential Instagram archives found. Using the most recent: {potential_archives[0]}"
-            )
+            print(f"   Found {len(potential_archives)} archives. Using most recent.")
 
         self.input_path = potential_archives[0]
+        print(f"   Selected: {os.path.basename(self.input_path)}")
         return self.input_path
 
     def _is_instagram_archive(self, zip_path):
