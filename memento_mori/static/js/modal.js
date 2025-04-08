@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const indicator = document.createElement('div');
             indicator.className = 'slideshow-indicator';
 
-            for (let i = 0; i < post.media.length; i++) {
+            for (let i = 0; i < post.m.length; i++) {
                 const dot = document.createElement('div');
                 dot.className = `slideshow-dot ${i === initialImageIndex ? 'active' : ''}`;
                 dot.setAttribute('data-index', i);
