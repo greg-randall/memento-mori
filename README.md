@@ -68,7 +68,9 @@ Memento Mori processes your Instagram data export and generates a static site wi
 
 - Shareable links to specific posts and images
 
-- Copies all your media files to the distribution folder, maintaining the original structure
+- Copies all your media files to the distribution folder with shortened filenames for smaller HTML size
+
+- Fixes text encoding issues in captions and descriptions
 
   
 
@@ -243,6 +245,12 @@ python  -m  memento_mori.cli  --no-auto-detect  --input  path/to/export.zip
 -  **WebP Conversion**: Convert images to WebP format when it results in smaller file sizes for better performance.
 
 -  **Thumbnail Generation**: Generate thumbnails for images and videos to improve loading performance.
+
+-  **Filename Shortening**: Shortens long filenames to reduce HTML file size.
+
+-  **Text Encoding Fixes**: Automatically fixes common text encoding issues in captions and descriptions.
+
+-  **Optimized JSON**: Uses shortened keys in JSON data to reduce HTML file size.
 
   
 
