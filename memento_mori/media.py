@@ -183,31 +183,52 @@ class InstagramMediaProcessor:
         }
 
     def _calculate_space_savings(self, post_data):
-        """Calculate space savings from WebP conversion."""
+        """Calculate space savings from WebP conversion and other optimizations."""
         # Count thumbnails
         if (self.output_dir / "thumbnails").exists():
             self.thumbnail_count = len(
                 list((self.output_dir / "thumbnails").glob("*.webp"))
             )
 
-        # Calculate WebP savings
+        # Calculate total size of original files and their optimized versions
+        self.total_size_original = 0
+        self.total_size_webp = 0
+        
+        # Track all media files that were processed
+        processed_files = set()
+        
+        # First, add all media from posts
         for timestamp, post in post_data.items():
             for media_url in post["m"]:
-                if re.search(r"\.(jpg|jpeg|png|gif)$", str(media_url), re.I):
-                    original_path = Path(self.extraction_dir) / media_url
-                    webp_path = self.output_dir / re.sub(
-                        r"\.(jpg|jpeg|png|gif)$", ".webp", media_url, flags=re.I
-                    )
-
-                    if webp_path.exists():
-                        self.webp_count += 1
-
-                        # Calculate size difference if original exists
-                        if original_path.exists():
-                            original_size = original_path.stat().st_size
-                            webp_size = webp_path.stat().st_size
-                            self.total_size_original += original_size
-                            self.total_size_webp += webp_size
+                processed_files.add(media_url)
+        
+        # Process each file to calculate size differences
+        for media_url in processed_files:
+            # Get the original file path
+            original_path = Path(self.extraction_dir) / media_url
+            
+            # Get the shortened filename
+            shortened_url = self.shorten_filename(media_url)
+            
+            # Check if the original exists
+            if original_path.exists():
+                original_size = original_path.stat().st_size
+                self.total_size_original += original_size
+                
+                # Check for WebP version first
+                webp_path = self.output_dir / (shortened_url.rsplit('.', 1)[0] + '.webp')
+                
+                if webp_path.exists():
+                    # WebP version exists
+                    webp_size = webp_path.stat().st_size
+                    self.total_size_webp += webp_size
+                    self.webp_count += 1
+                else:
+                    # No WebP, check for the original format in output
+                    dest_path = self.output_dir / shortened_url
+                    if dest_path.exists():
+                        dest_size = dest_path.stat().st_size
+                        self.total_size_webp += dest_size
 
     def copy_file_to_distribution(self, file_path, quiet=True):
         """Copy a file to distribution, optionally converting images to WebP and generating thumbnails."""
