@@ -17,7 +17,7 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir -e .
 
 # For environments without pyproject.toml, install dependencies directly
-RUN pip install --no-cache-dir Pillow==11.1.0 tqdm==4.67.1 jinja2==3.1.6 opencv-python==4.11.0.86
+RUN pip install --no-cache-dir Pillow==11.1.0 tqdm==4.67.1 jinja2==3.1.6 opencv-python==4.11.0.86 ftfy==6.3.1
 
 # Copy application code
 COPY . .
