@@ -353,6 +353,11 @@ class InstagramMediaProcessor:
                 # Skip directories
                 if file_path.is_dir():
                     continue
+                
+                # Skip JSON files - we don't want to rename these
+                if file_path.suffix.lower() == '.json':
+                    stats["already_correct"] += 1
+                    continue
                     
                 # Get the current extension and mime type
                 current_ext = file_path.suffix.lower()
