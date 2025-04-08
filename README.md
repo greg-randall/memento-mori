@@ -2,7 +2,7 @@
 # Memento Mori - Instagram Archive Viewer
 
 ## Overview
-
+<img align="right" width="300" src="preview.gif" alt="Memento Mori Interface Preview">
 **Memento Mori** is a tool that converts your Instagram data export into a beautiful, standalone viewer that resembles the Instagram interface. The name "Memento Mori" (Latin for "remember that you will die") reflects the ephemeral nature of our digital content. You can see an example at [gregr.org/instagram](https://gregr.org/instagram/).
 
 ## Quick Start
@@ -12,7 +12,6 @@ docker compose run --rm memento-mori
 ```
 Then open output/index.html in your browser
 
-![Memento Mori Interface Preview](preview.gif)
 
 ## ⚠️ IMPORTANT SECURITY WARNING ⚠️
 
