@@ -332,7 +332,7 @@ class InstagramMediaProcessor:
     def fix_file_extensions(self, directory_path):
         """
         Scan a directory for files with incorrect extensions and fix them.
-        Particularly focuses on HEIC files that are actually JPEGs.
+        Particularly focuses on media files like HEIC files that are actually JPEGs.
         
         Args:
             directory_path (str or Path): Directory to scan for files with incorrect extensions
@@ -377,6 +377,9 @@ class InstagramMediaProcessor:
             "video/webm": ".webm"
         }
         
+        # List of media MIME type prefixes we want to process
+        media_mime_prefixes = ["image/", "video/"]
+        
         print(f"Scanning {directory_path} for files with incorrect extensions...")
         
         # Find all files recursively
@@ -388,13 +391,13 @@ class InstagramMediaProcessor:
                 if file_path.is_dir():
                     continue
                 
-                # Skip JSON files - we don't want to rename these
-                if file_path.suffix.lower() == '.json':
+                # Skip non-media files based on extension
+                current_ext = file_path.suffix.lower()
+                if current_ext in ['.json', '.txt', '.srt', '.csv', '.html', '.xml', '.md']:
                     stats["already_correct"] += 1
                     continue
                     
                 # Get the current extension and mime type
-                current_ext = file_path.suffix.lower()
                 # Handle different magic library interfaces
                 try:
                     # First approach (libmagic binding)
@@ -402,6 +405,11 @@ class InstagramMediaProcessor:
                 except AttributeError:
                     # Second approach (alternative API)
                     file_mime = mime.file(str(file_path))
+                
+                # Skip if not a media file
+                if not any(file_mime.startswith(prefix) for prefix in media_mime_prefixes):
+                    stats["already_correct"] += 1
+                    continue
                 
                 # Get the correct extension for this mime type
                 correct_ext = mime_to_ext.get(file_mime)
@@ -443,7 +451,7 @@ class InstagramMediaProcessor:
         # Print summary
         if stats["fixed"] > 0:
             print(f"\n🔧 EXTENSION CORRECTION")
-            print(f"   Fixed {stats['fixed']} files with incorrect extensions")
+            print(f"   Fixed {stats['fixed']} media files with incorrect extensions")
             # Group fixes by type for a cleaner summary
             fixes_by_type = {}
             for item in stats["fixed_files"]:
@@ -456,7 +464,7 @@ class InstagramMediaProcessor:
             for fix_type, count in fixes_by_type.items():
                 print(f"   • {count} files: {fix_type}")
         else:
-            print(f"\n✓ All {stats['already_correct']} files had correct extensions")
+            print(f"\n✓ All {stats['already_correct']} media files had correct extensions")
         
         if stats["errors"] > 0:
             print(f"   ⚠️ Errors: {stats['errors']}")
