@@ -125,9 +125,13 @@ def main():
         media_processor = InstagramMediaProcessor(
             extraction_dir, output_dir, thread_count=args.threads
         )
-        media_processor.process_media_files(
+        media_result = media_processor.process_media_files(
             data["posts"], data["profile"]["profile_picture"]
         )
+
+        # Update data with shortened filenames
+        data["posts"] = media_result["updated_post_data"]
+        data["profile"]["profile_picture"] = media_result["shortened_profile"]
 
         # Generate website with the loaded data
         print("Generating website...")

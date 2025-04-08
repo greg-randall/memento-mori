@@ -43,18 +43,83 @@ class InstagramMediaProcessor:
         self.webp_count = 0
         self.total_size_original = 0
         self.total_size_webp = 0
+        
+        # Initialize filename mapping
+        self.filename_map = {}
+
+    def shorten_filename(self, original_path):
+        """
+        Create a shortened version of a filename while preserving extension.
+        
+        Args:
+            original_path (str): Original file path
+            
+        Returns:
+            str: Shortened file path
+        """
+        if not original_path or not isinstance(original_path, str):
+            return original_path
+            
+        # Skip if it's already a data URI
+        if original_path.startswith('data:'):
+            return original_path
+            
+        # Check if we already have a mapping for this path
+        if original_path in self.filename_map:
+            return self.filename_map[original_path]
+            
+        # Parse the path
+        path_obj = Path(original_path)
+        parent_dir = path_obj.parent
+        filename = path_obj.name
+        extension = path_obj.suffix.lower()
+        
+        # Create a hash of the original filename
+        filename_hash = hashlib.md5(filename.encode()).hexdigest()[:8]  # Use first 8 chars of hash
+        
+        # Create new filename: hash + original extension
+        new_filename = f"{filename_hash}{extension}"
+        
+        # Create the new path
+        if parent_dir == Path('.'):
+            new_path = new_filename
+        else:
+            new_path = str(parent_dir / new_filename)
+        
+        # Store the mapping
+        self.filename_map[original_path] = new_path
+        
+        return new_path
 
     def process_media_files(self, post_data, profile_picture):
         """Process all media files from posts and profile picture."""
-        # Process profile picture
+        # Process profile picture and get shortened path
+        shortened_profile = self.shorten_filename(profile_picture)
         self.copy_file_to_distribution(profile_picture)
-        self.generate_thumbnail(profile_picture, profile_picture)
+        self.generate_thumbnail(profile_picture, shortened_profile)
 
         # Collect all media files to process
         all_media = []
+        
+        # Create a deep copy of post_data to modify
+        updated_post_data = {}
+        
         for timestamp, post in post_data.items():
+            # Create a copy of the post
+            updated_post = post.copy()
+            updated_media = []
+            
             for media_url in post["m"]:
+                # Add to processing list
                 all_media.append(media_url)
+                
+                # Get shortened path
+                shortened_url = self.shorten_filename(media_url)
+                updated_media.append(shortened_url)
+            
+            # Update the post with shortened media URLs
+            updated_post["m"] = updated_media
+            updated_post_data[timestamp] = updated_post
 
         total_media = len(all_media)
         print(
@@ -75,21 +140,25 @@ class InstagramMediaProcessor:
         # Calculate space savings
         self._calculate_space_savings(post_data)
 
-        # Return statistics
+        # Return updated post data and statistics
         return {
-            "thumbnail_count": self.thumbnail_count,
-            "webp_count": self.webp_count,
-            "total_size_original": self.total_size_original,
-            "total_size_webp": self.total_size_webp,
-            "space_saved_mb": (self.total_size_original - self.total_size_webp)
-            / (1024 * 1024),
-            "percentage_saved": (
-                (self.total_size_original - self.total_size_webp)
-                / self.total_size_original
-                * 100
-                if self.total_size_original > 0
-                else 0
-            ),
+            "updated_post_data": updated_post_data,
+            "shortened_profile": shortened_profile,
+            "stats": {
+                "thumbnail_count": self.thumbnail_count,
+                "webp_count": self.webp_count,
+                "total_size_original": self.total_size_original,
+                "total_size_webp": self.total_size_webp,
+                "space_saved_mb": (self.total_size_original - self.total_size_webp)
+                / (1024 * 1024),
+                "percentage_saved": (
+                    (self.total_size_original - self.total_size_webp)
+                    / self.total_size_original
+                    * 100
+                    if self.total_size_original > 0
+                    else 0
+                ),
+            }
         }
 
     def _calculate_space_savings(self, post_data):
@@ -126,7 +195,10 @@ class InstagramMediaProcessor:
             return True
 
         source = Path(self.extraction_dir) / file_path
-        destination = Path(self.output_dir) / file_path
+        
+        # Create shortened filename
+        shortened_path = self.shorten_filename(file_path)
+        destination = Path(self.output_dir) / shortened_path
 
         # Create directory structure if it doesn't exist
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -149,7 +221,7 @@ class InstagramMediaProcessor:
             self.convert_to_webp(source, webp_destination, quiet)
 
             # Generate thumbnail
-            self.generate_thumbnail(source, file_path, quiet)
+            self.generate_thumbnail(source, shortened_path, quiet)
             return True
         else:
             # Copy the file as is (for videos and other file types)
@@ -157,7 +229,7 @@ class InstagramMediaProcessor:
 
             # Generate thumbnail for videos
             if is_video:
-                self.generate_thumbnail(source, file_path, quiet)
+                self.generate_thumbnail(source, shortened_path, quiet)
             return True
 
     def convert_to_webp(self, source_path, destination_path, quiet=False):
