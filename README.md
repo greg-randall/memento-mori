@@ -40,39 +40,37 @@ Memento Mori processes your Instagram data export and generates a static site wi
 
 ### 1. Get Your Instagram Data
 1. Request and download your Instagram data archive
-2. Place the zip within the folder of this repo  
+2. Place the zip within the folder of this repo
 
 ### 2. Preferred Method: Using Docker (Easiest)
 Docker Compose is the easiest way to run Memento Mori without installing any dependencies:
 ```bash
 # Build the Docker image
-docker compose  build
+docker compose build
 
 # Run with default settings
-docker compose  run  --rm  memento-mori
+docker compose run --rm memento-mori
 
 # Run with specific arguments
-docker compose  run  --rm  memento-mori  --output  /output/my-site  --quality  90
+docker compose run --rm memento-mori --output /output/my-site --quality 90
 ```
 
 By default, Docker will:
 - Search for exports in the project directory
-- Output the generated site to the './output' directory  
+- Output the generated site to the './output' directory
 
 ### 3. Alternative Method: Direct Python Installation
 If you prefer running the tool directly without Docker:
 ```bash
 # Install package and dependencies
-pip  install  -e  .
+pip install -e .
 
 # Or install dependencies manually
-pip  install  ftfy==6.3.1  Jinja2==3.0.3  MarkupSafe==2.1.5  opencv_python==4.10.0.84  Pillow==11.1.0  tqdm==4.67.1
+pip install ftfy==6.3.1 Jinja2==3.0.3 MarkupSafe==2.1.5 opencv_python==4.10.0.84 Pillow==11.1.0 tqdm==4.67.1
 
 # Run the CLI
-python  -m  memento_mori.cli
+python -m memento_mori.cli
 ```
-
-  
 
 ### CLI Arguments
 The CLI supports the following arguments:
@@ -92,33 +90,33 @@ Note: Auto-detection is enabled by default and will look for exports in the curr
 ### Example Commands
 ```bash
 # Auto-detect export in current directory
-python  -m  memento_mori.cli
+python -m memento_mori.cli
 
 # Specify input file/folder and output directory
-python  -m  memento_mori.cli  --input  path/to/export.zip  --output  my-site
+python -m memento_mori.cli --input path/to/export.zip --output my-site
 
 # Use specific number of threads and image quality
-python  -m  memento_mori.cli  --threads  8  --quality  90
+python -m memento_mori.cli --threads 8 --quality 90
 
 # Specify search directory for auto-detection
-python  -m  memento_mori.cli  --search-dir  ~/Downloads
+python -m memento_mori.cli --search-dir ~/Downloads
 
 # Use custom thumbnail size
-python  -m  memento_mori.cli  --thumbnail-size  400x400
+python -m memento_mori.cli --thumbnail-size 400x400
 
 # Disable auto-detection (requires specifying input)
-python  -m  memento_mori.cli  --no-auto-detect  --input  path/to/export.zip
+python -m memento_mori.cli --no-auto-detect --input path/to/export.zip
 
 ```
 
 ## Key Features
--  **Auto-detection**: Memento Mori will automatically look for Instagram archive ZIP files or extracted folders in the specified directory. The ZIP file can be placed anywhere within the project folder and it will be discovered.
--  **Multi-threading**: Process media files in parallel for faster conversion using multiple CPU cores.
--  **WebP Conversion**: Convert images to WebP format when it results in smaller file sizes for better performance.
--  **Thumbnail Generation**: Generate thumbnails for images and videos to improve loading performance.
--  **Filename Shortening**: Shortens long filenames to reduce HTML file size.
--  **Text Encoding Fixes**: Automatically fixes common text encoding issues in captions and descriptions.
--  **Optimized JSON**: Uses shortened keys in JSON data to reduce HTML file size.  
+- **Auto-detection**: Memento Mori will automatically look for Instagram archive ZIP files or extracted folders in the specified directory. The ZIP file can be placed anywhere within the project folder and it will be discovered.
+- **Multi-threading**: Process media files in parallel for faster conversion using multiple CPU cores.
+- **WebP Conversion**: Convert images to WebP format when it results in smaller file sizes for better performance.
+- **Thumbnail Generation**: Generate thumbnails for images and videos to improve loading performance.
+- **Filename Shortening**: Shortens long filenames to reduce HTML file size.
+- **Text Encoding Fixes**: Automatically fixes common text encoding issues in captions and descriptions.
+- **Optimized JSON**: Uses shortened keys in JSON data to reduce HTML file size.
 
 ## Viewing Your Generated Site
 After the tool finishes processing your Instagram data:
