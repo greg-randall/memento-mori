@@ -411,7 +411,7 @@ class InstagramMediaProcessor:
                         "new_type": correct_ext
                     })
                     
-                    print(f"Fixed: {file_path} → {new_path} (was {current_ext}, actually {correct_ext})")
+                    # Don't print each fixed file to keep output clean
                 else:
                     stats["already_correct"] += 1
                     
@@ -420,11 +420,24 @@ class InstagramMediaProcessor:
                 stats["errors"] += 1
         
         # Print summary
-        print(f"\nExtension correction complete:")
-        print(f"  Total files checked: {stats['total_checked']}")
-        print(f"  Files fixed: {stats['fixed']}")
-        print(f"  Files already correct: {stats['already_correct']}")
-        print(f"  Errors: {stats['errors']}")
+        if stats["fixed"] > 0:
+            print(f"\nExtension correction complete: Fixed {stats['fixed']} files with incorrect extensions")
+            # Group fixes by type for a cleaner summary
+            fixes_by_type = {}
+            for item in stats["fixed_files"]:
+                key = f"{item['old_type']} → {item['new_type']}"
+                if key not in fixes_by_type:
+                    fixes_by_type[key] = 0
+                fixes_by_type[key] += 1
+            
+            # Print summary by type
+            for fix_type, count in fixes_by_type.items():
+                print(f"  {count} files: {fix_type}")
+        else:
+            print(f"\nExtension correction complete: All {stats['already_correct']} files had correct extensions")
+        
+        if stats["errors"] > 0:
+            print(f"  Errors: {stats['errors']}")
         
         # Add a path mapping to the stats
         stats["path_mapping"] = {item["old_path"]: item["new_path"] for item in stats["fixed_files"]}
