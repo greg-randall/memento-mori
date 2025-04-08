@@ -100,6 +100,13 @@ class InstagramMediaProcessor:
         extension_stats = self.fix_file_extensions(self.extraction_dir)
         print(f"Fixed {extension_stats['fixed']} files with incorrect extensions")
         
+        # Create a path mapping for quick lookups
+        path_mapping = extension_stats.get("path_mapping", {})
+        
+        # Update profile picture path if it was fixed
+        if profile_picture in path_mapping:
+            profile_picture = path_mapping[profile_picture]
+        
         # Process profile picture and get shortened path
         shortened_profile = self.shorten_filename(profile_picture)
         self.copy_file_to_distribution(profile_picture)
@@ -117,6 +124,12 @@ class InstagramMediaProcessor:
             updated_media = []
             
             for media_url in post["m"]:
+                # Check if this media URL was fixed
+                if str(self.extraction_dir / media_url) in path_mapping:
+                    # Get the new path relative to extraction_dir
+                    new_full_path = path_mapping[str(self.extraction_dir / media_url)]
+                    media_url = str(Path(new_full_path).relative_to(self.extraction_dir))
+                
                 # Add to processing list
                 all_media.append(media_url)
                 
@@ -412,6 +425,9 @@ class InstagramMediaProcessor:
         print(f"  Files fixed: {stats['fixed']}")
         print(f"  Files already correct: {stats['already_correct']}")
         print(f"  Errors: {stats['errors']}")
+        
+        # Add a path mapping to the stats
+        stats["path_mapping"] = {item["old_path"]: item["new_path"] for item in stats["fixed_files"]}
         
         return stats
 
