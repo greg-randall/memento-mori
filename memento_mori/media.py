@@ -95,6 +95,11 @@ class InstagramMediaProcessor:
 
     def process_media_files(self, post_data, profile_picture):
         """Process all media files from posts and profile picture."""
+        # First, fix any incorrect file extensions in the extraction directory
+        print("Checking and fixing file extensions...")
+        extension_stats = self.fix_file_extensions(self.extraction_dir)
+        print(f"Fixed {extension_stats['fixed']} files with incorrect extensions")
+        
         # Process profile picture and get shortened path
         shortened_profile = self.shorten_filename(profile_picture)
         self.copy_file_to_distribution(profile_picture)
@@ -160,6 +165,7 @@ class InstagramMediaProcessor:
                     if self.total_size_original > 0
                     else 0
                 ),
+                "extension_fixes": extension_stats["fixed"],
             }
         }
 
