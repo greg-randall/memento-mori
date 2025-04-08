@@ -35,6 +35,8 @@ Memento Mori processes your Instagram data export and generates a static site wi
 - Shareable links to specific posts and images
 - Copies all your media files to the distribution folder with shortened filenames for smaller HTML size
 - Fixes text encoding issues in captions and descriptions
+- Automatically detects and fixes mislabeled file formats (e.g., HEIC files that are actually JPEGs)
+- Provides user-friendly console output with clear progress indicators
 
 ## How to Use Memento Mori
 
@@ -66,7 +68,7 @@ If you prefer running the tool directly without Docker:
 pip install -e .
 
 # Or install dependencies manually
-pip install ftfy==6.3.1 Jinja2==3.0.3 MarkupSafe==2.1.5 opencv_python==4.10.0.84 Pillow==11.1.0 tqdm==4.67.1
+pip install ftfy==6.3.1 Jinja2==3.0.3 MarkupSafe==2.1.5 opencv_python==4.10.0.84 Pillow==11.1.0 tqdm==4.67.1 python_magic==0.4.27
 
 # Run the CLI
 python -m memento_mori.cli
