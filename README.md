@@ -1,7 +1,7 @@
 # Memento Mori - Instagram Archive Viewer
 
-## Overview
 <img align="right" width="300" hspace="20" src="preview.gif" alt="Memento Mori Interface Preview">
+
 **Memento Mori** is a tool that converts your Instagram data export into a beautiful, standalone viewer that resembles the Instagram interface. The name "Memento Mori" (Latin for "remember that you will die") reflects the ephemeral nature of our digital content. You can see an example at https://gregr.org/instagram/.
 
 ## Quick Start
@@ -110,15 +110,6 @@ python -m memento_mori.cli --no-auto-detect --input path/to/export.zip
 
 ```
 
-## Key Features
-- **Auto-detection**: Memento Mori will automatically look for Instagram archive ZIP files or extracted folders in the specified directory. The ZIP file can be placed anywhere within the project folder and it will be discovered.
-- **Multi-threading**: Process media files in parallel for faster conversion using multiple CPU cores.
-- **WebP Conversion**: Convert images to WebP format when it results in smaller file sizes for better performance.
-- **Thumbnail Generation**: Generate thumbnails for images and videos to improve loading performance.
-- **Filename Shortening**: Shortens long filenames to reduce HTML file size.
-- **Text Encoding Fixes**: Automatically fixes common text encoding issues in captions and descriptions.
-- **Optimized JSON**: Uses shortened keys in JSON data to reduce HTML file size.
-
 ## Viewing Your Generated Site
 After the tool finishes processing your Instagram data:
 1. The website will be generated in the output directory (default: ./output)
@@ -126,17 +117,17 @@ After the tool finishes processing your Instagram data:
 3. You can also upload the entire output directory to a web hosting service to share it online
 
 ## PHP Version (Alternative)
-For those who prefer the deprecated PHP implementation:
+For those who prefer the deprecated PHP implementation, there are a few notes in the deprecated_php_utility folder, but basically extract your data into the folder with the php file, and run
 ```bash
 # Run from command line
 php index.php
 ```
 
 ## Why This Exists
+When requesting your data from Instagram, the export you receive contains your content but in a format that's intentionally difficult to navigate and enjoy. Memento Mori solves this problem by transforming your archive into an intuitive, familiar interface that brings your memories back to life.
+
 Instagram, like many social platforms, has undergone significant "enshittification" - a term coined to describe how platforms evolve:
 
 1. First, they attract users with a quality experience
 2. Then, they leverage their position to extract data and attention
 3. Finally, they degrade the user experience to maximize profit
-
-When requesting your data from Instagram, the export you receive contains your content but in a format that's intentionally difficult to navigate and enjoy. Memento Mori solves this problem by transforming your archive into an intuitive, familiar interface that brings your memories back to life.
