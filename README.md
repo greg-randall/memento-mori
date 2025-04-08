@@ -44,7 +44,7 @@ Memento Mori processes your Instagram data export and generates a static site wi
 2. Place the zip within the folder of this repo
 
 ### 2. Preferred Method: Using Docker (Easiest)
-Docker Compose is the easiest way to run Memento Mori without installing any dependencies:
+Docker Compose is the easiest way to run Memento Mori without installing any dependencies. Many thanks to [CarsonDavis](https://github.com/CarsonDavis) for building out all the dockerizing code (as well as generally making my code better):
 ```bash
 # Build the Docker image
 docker compose build
