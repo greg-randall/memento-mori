@@ -316,13 +316,20 @@ class InstagramMediaProcessor:
         }
         
         # Make sure we have the mime-type libraries
-        if not hasattr(magic, "Magic"):
-            print("Please install python-magic: pip install python-magic")
-            if os.name == "nt":  # Windows
-                print("Windows users also need to install the binary from: https://github.com/ahupp/python-magic#windows")
-            return stats
-        
-        mime = magic.Magic(mime=True)
+        try:
+            # Try the libmagic binding first (common on Linux/Mac)
+            mime = magic.Magic(mime=True)
+        except (TypeError, AttributeError):
+            try:
+                # Try the alternative API (common in some python-magic implementations)
+                mime = magic.open(magic.MAGIC_MIME_TYPE)
+                mime.load()
+            except (AttributeError, TypeError):
+                print("Error initializing python-magic. Please install it:")
+                print("pip install python-magic")
+                if os.name == "nt":  # Windows
+                    print("Windows users also need to install the binary from: https://github.com/ahupp/python-magic#windows")
+                return stats
         
         # Mapping of MIME types to extensions
         mime_to_ext = {
@@ -349,7 +356,13 @@ class InstagramMediaProcessor:
                     
                 # Get the current extension and mime type
                 current_ext = file_path.suffix.lower()
-                file_mime = mime.from_file(str(file_path))
+                # Handle different magic library interfaces
+                try:
+                    # First approach (libmagic binding)
+                    file_mime = mime.from_file(str(file_path))
+                except AttributeError:
+                    # Second approach (alternative API)
+                    file_mime = mime.file(str(file_path))
                 
                 # Get the correct extension for this mime type
                 correct_ext = mime_to_ext.get(file_mime)
