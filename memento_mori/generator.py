@@ -21,10 +21,11 @@ class InstagramSiteGenerator:
     - Verifying the completeness of the output
     """
 
-    def __init__(self, data_package, output_dir, template_dir=None, static_dir=None):
+    def __init__(self, data_package, output_dir, template_dir=None, static_dir=None, gtag_id=None):
         """Initialize the generator with data and path options."""
         self.data_package = data_package
         self.output_dir = Path(output_dir)
+        self.gtag_id = gtag_id  # Store the Google tag ID
 
         # Find template directory
         if template_dir is None:
@@ -137,6 +138,7 @@ class InstagramSiteGenerator:
             grid_html=grid_html,
             post_data_json=json.dumps(self.data_package["posts"], ensure_ascii=False),
             generation_date=generation_date,
+            gtag_id=self.gtag_id,  # Add Google tag ID
         )
 
         # Write HTML file

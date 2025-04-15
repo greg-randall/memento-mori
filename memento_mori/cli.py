@@ -57,6 +57,11 @@ def main():
         action="store_true",
         help="Disable auto-detection (requires --input to be specified)",
     )
+    parser.add_argument(
+        "--gtag-id",
+        type=str,
+        help="Google Analytics tag ID (e.g., 'G-DX1ZWTC9NZ') to add tracking to the generated site",
+    )
 
     args = parser.parse_args()
 
@@ -137,7 +142,7 @@ def main():
 
         # Generate website with the loaded data
         print("\n🌐 GENERATING WEBSITE")
-        generator = InstagramSiteGenerator(data, output_dir)
+        generator = InstagramSiteGenerator(data, output_dir, gtag_id=args.gtag_id)
         success = generator.generate()
 
         if success:
