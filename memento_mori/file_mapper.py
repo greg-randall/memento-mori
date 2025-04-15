@@ -13,7 +13,12 @@ class InstagramFileMapper:
     FILE_PATTERNS = {
         "posts": ["**/content/posts*.json", "**/media/posts*.json"],
         "insights": ["**/past_instagram_insights/posts.json"],
-        "profile": ["**/personal_information/personal_information.json"],
+        "profile": [
+            "**/personal_information/personal_information.json",
+            "**/account_information/personal_information.json",  # Alternative location
+            "**/personal_information.json",  # Directly in root
+            "**/profile_information.json"    # Alternative filename
+        ],
         "location": ["**/information_about_you/profile_based_in.json"],
         # Add more patterns as needed
     }
