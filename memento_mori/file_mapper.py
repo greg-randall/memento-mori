@@ -17,7 +17,8 @@ class InstagramFileMapper:
             "**/personal_information/personal_information.json",
             "**/account_information/personal_information.json",  # Alternative location
             "**/personal_information.json",  # Directly in root
-            "**/profile_information.json"    # Alternative filename
+            # Search in any subdirectory
+            "**/*/personal_information.json"
         ],
         "location": ["**/information_about_you/profile_based_in.json"],
         # Add more patterns as needed
