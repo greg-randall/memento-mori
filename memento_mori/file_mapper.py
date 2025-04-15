@@ -20,7 +20,13 @@ class InstagramFileMapper:
             # Search in any subdirectory
             "**/*/personal_information.json"
         ],
-        "location": ["**/information_about_you/profile_based_in.json"],
+        "location": [
+            "**/information_about_you/profile_based_in.json",
+            "**/profile_based_in.json",  # Directly in root
+            "**/*/profile_based_in.json",  # In any subdirectory
+            "**/account_information/profile_based_in.json",  # Alternative location
+            "**/personal_information/profile_based_in.json"  # Another possible location
+        ],
         # Add more patterns as needed
     }
 
