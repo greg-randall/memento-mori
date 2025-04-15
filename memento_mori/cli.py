@@ -43,8 +43,14 @@ def main():
     parser.add_argument(
         "--quality",
         type=int,
-        default=80,
-        help="WebP conversion quality (1-100) [default: 80]",
+        default=70,
+        help="WebP conversion quality (1-100) [default: 70]",
+    )
+    parser.add_argument(
+        "--max-dimension",
+        type=int,
+        default=1200,
+        help="Maximum dimension for images in pixels [default: 1200]",
     )
     parser.add_argument(
         "--thumbnail-size",
@@ -128,9 +134,10 @@ def main():
 
         # Process media files
         print(f"\n🖼️  PROCESSING MEDIA")
-        print(f"   Using {args.threads} threads, quality {args.quality}...")
+        print(f"   Using {args.threads} threads, quality {args.quality}, max dimension {args.max_dimension}...")
         media_processor = InstagramMediaProcessor(
-            extraction_dir, output_dir, thread_count=args.threads
+            extraction_dir, output_dir, thread_count=args.threads,
+            quality=args.quality, max_dimension=args.max_dimension
         )
         media_result = media_processor.process_media_files(
             data["posts"], data["profile"]["profile_picture"]

@@ -23,11 +23,13 @@ class InstagramMediaProcessor:
     - Copying media files to the output directory
     """
 
-    def __init__(self, extraction_dir, output_dir, thread_count=None):
+    def __init__(self, extraction_dir, output_dir, thread_count=None, quality=70, max_dimension=1200):
         """Initialize the media processor with paths and options."""
         self.extraction_dir = Path(extraction_dir)
         self.output_dir = Path(output_dir)
         self.thread_count = thread_count or max(1, multiprocessing.cpu_count() - 1)
+        self.quality = quality  # Store the quality setting
+        self.max_dimension = max_dimension  # Maximum dimension for resizing
 
         # Create output directories
         self.media_dirs = [
@@ -279,6 +281,22 @@ class InstagramMediaProcessor:
         try:
             # Open the image
             with Image.open(source_path) as img:
+                # Get original dimensions
+                original_width, original_height = img.size
+                
+                # Resize if the image is larger than the maximum dimension
+                if original_width > self.max_dimension or original_height > self.max_dimension:
+                    # Calculate the scaling factor
+                    scale = self.max_dimension / max(original_width, original_height)
+                    new_width = int(original_width * scale)
+                    new_height = int(original_height * scale)
+                    
+                    # Resize the image
+                    img = img.resize((new_width, new_height), Image.LANCZOS)
+                    
+                    if not quiet:
+                        print(f"Resized image from {original_width}x{original_height} to {new_width}x{new_height}")
+                
                 # Handle transparency
                 if img.mode in ("RGBA", "LA") or (
                     img.mode == "P" and "transparency" in img.info
@@ -288,8 +306,8 @@ class InstagramMediaProcessor:
                 else:
                     img = img.convert("RGB")
 
-                # Save as WebP with 80% quality
-                img.save(destination_path, "WEBP", quality=80)
+                # Save as WebP with the configured quality and method=6 for better compression
+                img.save(destination_path, "WEBP", quality=self.quality, method=6)
 
             # Check if the WebP file is actually smaller
             original_size = source_path.stat().st_size
