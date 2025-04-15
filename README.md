@@ -85,7 +85,7 @@ Options:
 --threads INTEGER Number of parallel processing threads [default: core count - 1]
 --search-dir PATH Directory to search for exports when auto-detecting [default: current directory]
 --quality INTEGER WebP conversion quality (1-100) [default: 70]
---max-dimension INTEGER Maximum dimension for images in pixels [default: 1200]
+--max-dimension INTEGER Maximum dimension for images in pixels [default: 1920]
 --thumbnail-size WxH Size of thumbnails [default: 292x292]
 --no-auto-detect Disable auto-detection (requires --input to be specified)
 --gtag-id ID     Google Analytics tag ID (e.g., 'G-DX1ZWTC9NZ') to add tracking to the generated site

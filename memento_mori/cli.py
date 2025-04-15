@@ -49,8 +49,8 @@ def main():
     parser.add_argument(
         "--max-dimension",
         type=int,
-        default=1200,
-        help="Maximum dimension for images in pixels [default: 1200]",
+        default=1920,
+        help="Maximum dimension for images in pixels [default: 1920]",
     )
     parser.add_argument(
         "--thumbnail-size",
