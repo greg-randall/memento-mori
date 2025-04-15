@@ -54,6 +54,9 @@ docker compose run --rm memento-mori
 
 # Run with specific arguments
 docker compose run --rm memento-mori --output /output/my-site --quality 90
+
+# Add Google Analytics tracking
+docker compose run --rm memento-mori --gtag-id G-DX1ZWTC9NZ
 ```
 
 By default, Docker will:
@@ -84,6 +87,7 @@ Options:
 --quality INTEGER WebP conversion quality (1-100) [default: 80]
 --thumbnail-size WxH Size of thumbnails [default: 292x292]
 --no-auto-detect Disable auto-detection (requires --input to be specified)
+--gtag-id ID     Google Analytics tag ID (e.g., 'G-DX1ZWTC9NZ') to add tracking to the generated site
 ```
 
 Note: Auto-detection is enabled by default and will look for exports in the current directory. Use `--no-auto-detect` if you want to disable this feature and specify an input path manually.
@@ -108,6 +112,8 @@ python -m memento_mori.cli --thumbnail-size 400x400
 # Disable auto-detection (requires specifying input)
 python -m memento_mori.cli --no-auto-detect --input path/to/export.zip
 
+# Add Google Analytics tracking
+python -m memento_mori.cli --gtag-id G-DX1ZWTC9NZ
 ```
 
 ## Viewing Your Generated Site
