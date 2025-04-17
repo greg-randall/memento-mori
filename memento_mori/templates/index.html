@@ -43,7 +43,7 @@
             <div class="stat">
               <span class="stat-count" id="post-count">{{ post_count }}</span> posts
             </div>
-            {% if profile.follower_count and profile.follower_count > 0 %}
+            {% if profile.follower_count is defined and profile.follower_count is not none %}
             <div class="stat">
               <span class="stat-count" id="follower-count">{{ profile.follower_count }}</span> followers
             </div>
