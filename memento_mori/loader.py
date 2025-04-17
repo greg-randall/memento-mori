@@ -79,7 +79,8 @@ class InstagramDataLoader:
                 "profile_picture": self.profile_data["profile_user"][0][
                     "media_map_data"
                 ]["Profile Photo"]["uri"],
-                "bio": ""  # Initialize bio as empty string
+                "bio": "",  # Initialize bio as empty string
+                "website": ""  # Initialize website as empty string
             }
             
             # Extract bio if available
@@ -87,6 +88,12 @@ class InstagramDataLoader:
                 profile_info["bio"] = self.profile_data["profile_user"][0]["string_map_data"]["Bio"]["value"]
                 if self.verbose:
                     print(f"Found bio: {profile_info['bio'][:30]}...")
+            
+            # Extract website if available
+            if "Website" in self.profile_data["profile_user"][0]["string_map_data"]:
+                profile_info["website"] = self.profile_data["profile_user"][0]["string_map_data"]["Website"]["value"]
+                if self.verbose:
+                    print(f"Found website: {profile_info['website']}")
 
             return profile_info
         except Exception as e:

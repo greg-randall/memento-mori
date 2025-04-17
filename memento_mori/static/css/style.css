@@ -89,9 +89,23 @@ main {
 }
 
 .profile-details .bio {
-  margin: 0 0 15px 0;
+  margin: 0 0 10px 0;
   max-width: 600px;
   line-height: 1.4;
+}
+
+.profile-details .website {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+}
+
+.profile-details .website a {
+  color: var(--instagram-link);
+  text-decoration: none;
+}
+
+.profile-details .website a:hover {
+  text-decoration: underline;
 }
 
 .stats {
