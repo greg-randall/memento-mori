@@ -134,6 +134,7 @@ class InstagramSiteGenerator:
             username=profile_info["username"],
             profile_picture=profile_picture,
             bio=profile_info.get("bio", ""),  # Pass bio to template
+            profile=profile_info,  # Pass the entire profile object
             date_range=date_range,
             post_count=post_count,
             grid_html=grid_html,
