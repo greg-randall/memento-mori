@@ -207,6 +207,8 @@ class InstagramDataLoader:
             print(
                 "Warning: No insights file found. Insights data will not be available."
             )
+            # Initialize as empty dict, not None
+            self.insights_data = {}
             return {}
 
         try:
@@ -265,8 +267,14 @@ class InstagramDataLoader:
                 print("No insights data yet, loading insights data")
             self.load_insights_data()
 
+        # Ensure insights_data is a dictionary
+        if not isinstance(self.insights_data, dict):
+            if self.verbose:
+                print("Warning: insights_data is not a dictionary, initializing as empty")
+            self.insights_data = {}
+
         if self.verbose:
-            print(f"Combining {len(self.posts_data) if self.posts_data else 0} posts with {len(self.insights_data) if self.insights_data else 0} insights entries")
+            print(f"Combining {len(self.posts_data) if self.posts_data else 0} posts with {len(self.insights_data)} insights entries")
 
         combined = []
         
