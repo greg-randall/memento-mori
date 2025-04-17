@@ -152,6 +152,11 @@ class InstagramSiteGenerator:
         posts_data = self.data_package["posts"]
         lazy_after = 30  # Start lazy loading after this many posts
 
+        # Check if posts_data is valid
+        if not posts_data or not isinstance(posts_data, dict):
+            print("Warning: No valid posts data found for grid rendering")
+            return ""
+
         # Prepare data for the grid template
         grid_posts = []
         for i, (timestamp, post) in enumerate(posts_data.items()):

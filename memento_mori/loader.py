@@ -142,10 +142,26 @@ class InstagramDataLoader:
                     
                     # Parse the modified content
                     posts_data = json.loads(file_content, strict=False)
-                    all_posts.extend(posts_data)
+                    
+                    # Check if posts_data is a list (expected format)
+                    if isinstance(posts_data, list):
+                        all_posts.extend(posts_data)
+                    elif isinstance(posts_data, dict):
+                        # Some exports might have posts as a dictionary
+                        # Try to extract a list from it
+                        if "posts" in posts_data and isinstance(posts_data["posts"], list):
+                            all_posts.extend(posts_data["posts"])
+                        else:
+                            # Add the dict as a single item if we can't extract a list
+                            all_posts.append(posts_data)
+                    else:
+                        print(f"Warning: Unexpected posts data format in {posts_path}")
             except Exception as e:
                 print(f"Error loading posts data from {posts_path}: {str(e)}")
 
+        if not all_posts:
+            print("Warning: No posts data could be loaded from any file")
+            
         self.posts_data = all_posts
         return all_posts
 
@@ -253,6 +269,11 @@ class InstagramDataLoader:
         """
         if self.combined_data is None:
             self.combine_data()
+            
+        # Check if combined_data is still None or empty after trying to combine
+        if not self.combined_data:
+            print("Warning: No post data found or could not be processed.")
+            return {}
 
         simplified_data = {}
 
@@ -407,7 +428,7 @@ class InstagramDataLoader:
         posts_data = self.process_json_strings(posts_data)
 
         # Get date range for display
-        if posts_data:
+        if posts_data and isinstance(posts_data, dict) and len(posts_data) > 0:
             keys = list(posts_data.keys())
             first_key = keys[0]  # Newest post
             last_key = keys[-1]  # Oldest post
@@ -427,6 +448,9 @@ class InstagramDataLoader:
             }
         else:
             date_range = {"newest": "Unknown", "oldest": "Unknown", "range": "Unknown"}
+            # If no posts data, create an empty dict to avoid NoneType errors
+            if not isinstance(posts_data, dict):
+                posts_data = {}
 
         return {
             "profile": profile_info,
