@@ -4,6 +4,8 @@ import os
 import argparse
 import multiprocessing
 from pathlib import Path
+import traceback
+import sys
 
 from memento_mori.extractor import InstagramArchiveExtractor
 from memento_mori.loader import InstagramDataLoader
@@ -68,6 +70,11 @@ def main():
         type=str,
         help="Google Analytics tag ID (e.g., 'G-DX1ZWTC9NZ') to add tracking to the generated site",
     )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose output for debugging",
+    )
 
     args = parser.parse_args()
 
@@ -126,10 +133,32 @@ def main():
 
         # Initialize loader with the same file mapper
         print("\n📋 LOADING DATA")
-        loader = InstagramDataLoader(extraction_dir, file_mapper)
+        loader = InstagramDataLoader(extraction_dir, file_mapper, verbose=args.verbose)
 
         # Load and process data
         data = loader.load_all_data()
+        
+        if args.verbose:
+            print("\n🔍 VERBOSE: Data Loading Details")
+            print(f"   Profile data found: {'Yes' if loader.profile_data else 'No'}")
+            print(f"   Location data found: {'Yes' if loader.location_data else 'No'}")
+            print(f"   Posts data found: {'Yes' if loader.posts_data else 'No'}")
+            print(f"   Insights data found: {'Yes' if loader.insights_data else 'No'}")
+            print(f"   Combined data entries: {len(loader.combined_data) if loader.combined_data else 0}")
+            
+            # Show file paths that were found
+            print("\n   File paths found:")
+            for file_type, file_path in file_mapper.file_map.items():
+                if isinstance(file_path, list):
+                    print(f"      {file_type}: {len(file_path)} files")
+                    if args.verbose:
+                        for i, path in enumerate(file_path[:3]):  # Show first 3 only
+                            print(f"         - {path}")
+                        if len(file_path) > 3:
+                            print(f"         - ... and {len(file_path)-3} more")
+                else:
+                    print(f"      {file_type}: {file_path}")
+        
         print(f"   Found {data['post_count']} posts from {data['profile']['username']}")
 
         # Process media files
@@ -167,6 +196,9 @@ def main():
 
     except Exception as e:
         print(f"\n❌ ERROR: {str(e)}")
+        if args.verbose:
+            print("\n🔍 VERBOSE: Exception traceback")
+            traceback.print_exc(file=sys.stdout)
         return 1
 
 

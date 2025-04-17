@@ -29,16 +29,18 @@ class InstagramDataLoader:
     - Provide a clean data structure for the generator
     """
 
-    def __init__(self, extraction_dir, file_mapper=None):
+    def __init__(self, extraction_dir, file_mapper=None, verbose=False):
         """
         Initialize the loader with the path to the extracted data.
 
         Args:
             extraction_dir (str): Path to the extracted Instagram data
             file_mapper (InstagramFileMapper, optional): File mapper from extractor
+            verbose (bool): Whether to print verbose debug information
         """
         self.extraction_dir = extraction_dir
         self.file_mapper = file_mapper
+        self.verbose = verbose
 
         # If no file mapper was provided, create one
         if self.file_mapper is None:
@@ -131,11 +133,22 @@ class InstagramDataLoader:
             print("No posts data found")
             return []
 
+        if self.verbose:
+            print(f"Found {len(post_paths)} posts data file(s):")
+            for i, path in enumerate(post_paths):
+                print(f"  {i+1}. {path}")
+
         for posts_path in post_paths:
             try:
+                if self.verbose:
+                    print(f"Loading posts from: {posts_path}")
+                
                 with open(posts_path, "r", encoding="utf-8") as f:
                     # Read the file content first
                     file_content = f.read()
+                    
+                    if self.verbose:
+                        print(f"  File size: {len(file_content)} bytes")
                     
                     # Fix encoding issues with ftfy
                     file_content = fix_text(file_content)
@@ -145,22 +158,39 @@ class InstagramDataLoader:
                     
                     # Check if posts_data is a list (expected format)
                     if isinstance(posts_data, list):
+                        if self.verbose:
+                            print(f"  Found {len(posts_data)} posts in list format")
                         all_posts.extend(posts_data)
                     elif isinstance(posts_data, dict):
                         # Some exports might have posts as a dictionary
+                        if self.verbose:
+                            print(f"  Found posts in dictionary format")
+                            print(f"  Dictionary keys: {', '.join(list(posts_data.keys())[:5])}...")
+                        
                         # Try to extract a list from it
                         if "posts" in posts_data and isinstance(posts_data["posts"], list):
+                            if self.verbose:
+                                print(f"  Found {len(posts_data['posts'])} posts in 'posts' key")
                             all_posts.extend(posts_data["posts"])
                         else:
                             # Add the dict as a single item if we can't extract a list
+                            if self.verbose:
+                                print(f"  No 'posts' list found, adding dictionary as a single item")
                             all_posts.append(posts_data)
                     else:
                         print(f"Warning: Unexpected posts data format in {posts_path}")
+                        if self.verbose:
+                            print(f"  Data type: {type(posts_data)}")
             except Exception as e:
                 print(f"Error loading posts data from {posts_path}: {str(e)}")
+                if self.verbose:
+                    import traceback
+                    traceback.print_exc()
 
         if not all_posts:
             print("Warning: No posts data could be loaded from any file")
+        elif self.verbose:
+            print(f"Successfully loaded {len(all_posts)} posts in total")
             
         self.posts_data = all_posts
         return all_posts
@@ -226,10 +256,17 @@ class InstagramDataLoader:
             list: Combined data with posts and their associated insights
         """
         if self.posts_data is None:
+            if self.verbose:
+                print("No posts data yet, loading posts data")
             self.load_posts_data()
 
         if self.insights_data is None:
+            if self.verbose:
+                print("No insights data yet, loading insights data")
             self.load_insights_data()
+
+        if self.verbose:
+            print(f"Combining {len(self.posts_data) if self.posts_data else 0} posts with {len(self.insights_data) if self.insights_data else 0} insights entries")
 
         combined = []
         
@@ -237,6 +274,12 @@ class InstagramDataLoader:
         insights_map = {}
         for timestamp, insight in self.insights_data.items():
             insights_map[str(timestamp)] = insight
+
+        if not self.posts_data:
+            if self.verbose:
+                print("Warning: No posts data to combine")
+            self.combined_data = []
+            return []
 
         for post in self.posts_data:
             try:
@@ -252,11 +295,27 @@ class InstagramDataLoader:
                 
                 # Create combined entry
                 combined.append({"post_data": post, "insights": insight})
+                
+                if self.verbose and not timestamp:
+                    print(f"Warning: Post without timestamp")
+                    print(f"  Post keys: {', '.join(list(post.keys())[:5])}...")
+                    if "media" in post:
+                        print(f"  Media items: {len(post['media'])}")
+                        if len(post["media"]) > 0:
+                            print(f"  First media keys: {', '.join(list(post['media'][0].keys())[:5])}...")
+                
             except (IndexError, KeyError) as e:
                 print(f"Error processing post: {str(e)}")
+                if self.verbose:
+                    import traceback
+                    traceback.print_exc()
+                    print(f"  Post keys: {', '.join(list(post.keys())[:5])}...")
                 # Add post without insights
                 combined.append({"post_data": post, "insights": None})
 
+        if self.verbose:
+            print(f"Created {len(combined)} combined entries")
+            
         self.combined_data = combined
         return combined
 
@@ -268,12 +327,21 @@ class InstagramDataLoader:
             dict: Simplified data structure with relevant information
         """
         if self.combined_data is None:
+            if self.verbose:
+                print("No combined data yet, calling combine_data()")
             self.combine_data()
             
         # Check if combined_data is still None or empty after trying to combine
         if not self.combined_data:
             print("Warning: No post data found or could not be processed.")
+            if self.verbose:
+                print("combined_data is None or empty after combine_data() call")
+                print(f"posts_data: {type(self.posts_data)}, length: {len(self.posts_data) if self.posts_data else 0}")
+                print(f"insights_data: {type(self.insights_data)}, length: {len(self.insights_data) if self.insights_data else 0}")
             return {}
+
+        if self.verbose:
+            print(f"Processing {len(self.combined_data)} combined data entries")
 
         simplified_data = {}
 
@@ -329,6 +397,9 @@ class InstagramDataLoader:
                         if "uri" in media:
                             post_entry["m"].append(media["uri"])
                         else:
+                            if self.verbose:
+                                print(f"Warning: Media item without URI at post index {index}")
+                                print(f"  Media keys: {', '.join(list(media.keys())[:5])}...")
                             post_entry["m"].append("")
 
             # Get insights data if available
@@ -388,10 +459,22 @@ class InstagramDataLoader:
             elif insights_title:
                 post_entry["tt"] = insights_title
 
-            simplified_data[post_entry["t"]] = post_entry
+            # Only add posts with valid timestamps
+            if post_entry["t"]:
+                simplified_data[post_entry["t"]] = post_entry
+            elif self.verbose:
+                print(f"Skipping post at index {index} due to missing timestamp")
 
+        if self.verbose:
+            print(f"Extracted {len(simplified_data)} posts with valid timestamps")
+            
         # Sort by timestamp (newest first)
-        return dict(sorted(simplified_data.items(), key=lambda x: x[0], reverse=True))
+        sorted_data = dict(sorted(simplified_data.items(), key=lambda x: x[0], reverse=True))
+        
+        if self.verbose and sorted_data:
+            print(f"Posts date range: {datetime.utcfromtimestamp(int(list(sorted_data.keys())[-1])).strftime('%Y-%m-%d')} to {datetime.utcfromtimestamp(int(list(sorted_data.keys())[0])).strftime('%Y-%m-%d')}")
+            
+        return sorted_data
 
     def process_json_strings(self, data):
         """
