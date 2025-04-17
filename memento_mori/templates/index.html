@@ -43,6 +43,11 @@
             <div class="stat">
               <span class="stat-count" id="post-count">{{ post_count }}</span> posts
             </div>
+            {% if profile.follower_count > 0 %}
+            <div class="stat">
+              <span class="stat-count" id="follower-count">{{ profile.follower_count }}</span> followers
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>

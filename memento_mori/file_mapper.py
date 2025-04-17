@@ -27,6 +27,13 @@ class InstagramFileMapper:
             "**/account_information/profile_based_in.json",  # Alternative location
             "**/personal_information/profile_based_in.json"  # Another possible location
         ],
+        "followers": [
+            "**/connections/followers_and_following/followers*.json",
+            "**/followers_and_following/followers*.json",
+            "**/followers*.json",
+            # Search in any subdirectory
+            "**/*/followers*.json"
+        ],
         # Add more patterns as needed
     }
 

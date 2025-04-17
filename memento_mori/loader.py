@@ -491,6 +491,37 @@ class InstagramDataLoader:
             
         return sorted_data
 
+    def load_followers_data(self):
+        """
+        Load followers data and count the number of followers.
+
+        Returns:
+            int: Number of followers
+        """
+        followers_path = self.file_mapper.get_file_path("followers")
+        if not followers_path:
+            if self.verbose:
+                print("Followers data not found")
+            return 0
+
+        try:
+            with open(followers_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+                # Fix encoding issues
+                file_content = fix_text(file_content)
+                followers_data = json.loads(file_content, strict=False)
+
+            # Count the number of followers
+            follower_count = len(followers_data)
+            
+            if self.verbose:
+                print(f"Found {follower_count} followers")
+                
+            return follower_count
+        except Exception as e:
+            print(f"Error loading followers data: {str(e)}")
+            return 0
+            
     def process_json_strings(self, data):
         """
         Recursively process all string values in JSON data to fix encoding issues.
@@ -519,6 +550,10 @@ class InstagramDataLoader:
         profile_info = self.load_profile_data()
         location_info = self.load_location_data()
         posts_data = self.extract_relevant_data()
+        follower_count = self.load_followers_data()
+        
+        # Add follower count to profile info
+        profile_info["follower_count"] = follower_count
         
         # Process all string values to fix encoding issues
         profile_info = self.process_json_strings(profile_info)
