@@ -88,6 +88,12 @@ main {
   margin-bottom: 15px;
 }
 
+.profile-details .bio {
+  margin: 0 0 15px 0;
+  max-width: 600px;
+  line-height: 1.4;
+}
+
 .stats {
   display: flex;
   margin-bottom: 15px;
