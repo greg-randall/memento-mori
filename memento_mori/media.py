@@ -116,6 +116,7 @@ class InstagramMediaProcessor:
 
         # Collect all media files to process
         all_media = []
+        story_media = []  # Separate list for story media
         
         # Create a deep copy of post_data to modify
         updated_post_data = {}
@@ -145,6 +146,8 @@ class InstagramMediaProcessor:
             
         # Process stories data if provided
         updated_stories_data = {}
+        story_thumbnails = {}  # Store story thumbnail paths
+        
         if stories_data:
             for timestamp, story in stories_data.items():
                 # Create a copy of the story
@@ -160,6 +163,7 @@ class InstagramMediaProcessor:
                     
                     # Add to processing list
                     all_media.append(media_url)
+                    story_media.append(media_url)  # Also add to story-specific list
                     
                     # Get shortened path
                     shortened_url = self.shorten_filename(media_url)
@@ -184,6 +188,45 @@ class InstagramMediaProcessor:
                     unit="files",
                 )
             )
+        
+        # Generate story thumbnails with 9:16 aspect ratio
+        if story_media:
+            print(f"Generating {len(story_media)} story thumbnails with 9:16 aspect ratio...")
+            
+            # Process story thumbnails and collect results
+            with ThreadPoolExecutor(max_workers=self.thread_count) as executor:
+                story_thumb_results = list(
+                    tqdm(
+                        executor.map(
+                            lambda media_url: (
+                                media_url,
+                                self.generate_story_thumbnail(
+                                    self.extraction_dir / media_url, 
+                                    self.shorten_filename(media_url)
+                                )
+                            ),
+                            story_media
+                        ),
+                        total=len(story_media),
+                        desc="Processing story thumbnails",
+                        unit="files",
+                    )
+                )
+            
+            # Create a mapping of original media to thumbnail paths
+            for media_url, thumb_path in story_thumb_results:
+                if thumb_path:
+                    # Store relative path from output directory
+                    rel_thumb_path = str(Path(thumb_path).relative_to(self.output_dir))
+                    story_thumbnails[self.shorten_filename(media_url)] = rel_thumb_path
+            
+            # Add thumbnail paths to story data
+            for timestamp, story in updated_stories_data.items():
+                for i, media_url in enumerate(story["m"]):
+                    if media_url in story_thumbnails:
+                        # If this is the first media item, add the thumbnail path to the story
+                        if i == 0:
+                            story["story_thumb"] = story_thumbnails[media_url]
 
         # Calculate space savings
         self._calculate_space_savings(post_data)
@@ -628,4 +671,110 @@ class InstagramMediaProcessor:
         except Exception as e:
             if not quiet:
                 print(f"Error generating thumbnail: {str(e)}")
+            return None
+            
+    def generate_story_thumbnail(self, source_path, relative_path, quiet=False):
+        """Generate a 9:16 aspect ratio thumbnail for a story."""
+        # Ensure source_path is a Path object
+        source_path = Path(source_path) if not isinstance(source_path, Path) else source_path
+
+        # Create thumbnails directory
+        thumbs_dir = self.output_dir / "thumbnails" / "stories"
+        thumbs_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate unique filename for the thumbnail
+        thumb_filename = hashlib.md5(str(relative_path).encode()).hexdigest() + ".webp"
+        thumb_path = thumbs_dir / thumb_filename
+
+        # Skip if thumbnail already exists
+        if thumb_path.exists():
+            return thumb_path
+
+        # Target dimensions for 9:16 aspect ratio thumbnail
+        target_width = 270  # Keeping similar width as square thumbnails
+        target_height = 480  # 9:16 ratio (270 * 16/9)
+
+        try:
+            # Check if file exists
+            if not source_path.exists():
+                if not quiet:
+                    print(f"File not found: {source_path}")
+                return None
+
+            # Determine if it's a video
+            is_video = bool(re.search(r"\.(mp4|mov|avi|webm)$", str(source_path), re.I))
+
+            if is_video:
+                # Try using OpenCV for video thumbnail
+                try:
+                    import cv2
+
+                    video = cv2.VideoCapture(str(source_path))
+                    if not video.isOpened():
+                        raise Exception(f"Could not open video: {source_path}")
+
+                    # Get video properties
+                    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+                    fps = video.get(cv2.CAP_PROP_FPS)
+
+                    # Get frame from 1 second in or middle of video
+                    target_frame = (
+                        min(int(fps), total_frames // 2)
+                        if fps > 0
+                        else total_frames // 2
+                    )
+                    video.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+
+                    success, frame = video.read()
+                    video.release()
+
+                    if not success:
+                        raise Exception(f"Failed to extract frame from video")
+
+                    # Convert to RGB and create PIL image
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    img = Image.fromarray(frame_rgb)
+
+                except (ImportError, Exception) as e:
+                    if not quiet:
+                        print(f"Video thumbnail error: {str(e)}")
+                    return None
+            else:
+                # For images, use PIL
+                img = Image.open(source_path)
+
+            # Get original dimensions
+            original_width, original_height = img.size
+
+            # Calculate dimensions for cropping to 9:16 aspect ratio (center crop)
+            target_ratio = 9 / 16
+            original_ratio = original_width / original_height
+
+            if original_ratio > target_ratio:  # Image is wider than 9:16
+                # Crop width to match 9:16
+                new_width = int(original_height * target_ratio)
+                src_x = (original_width - new_width) // 2
+                src_y = 0
+                src_w = new_width
+                src_h = original_height
+            else:  # Image is taller than 9:16
+                # Crop height to match 9:16
+                new_height = int(original_width / target_ratio)
+                src_x = 0
+                src_y = (original_height - new_height) // 2
+                src_w = original_width
+                src_h = new_height
+
+            # Crop and resize
+            img = img.crop((src_x, src_y, src_x + src_w, src_y + src_h))
+            img = img.resize((target_width, target_height), Image.LANCZOS)
+
+            # Save as WebP
+            img.save(thumb_path, "WEBP", quality=80)
+
+            return thumb_path
+
+        except Exception as e:
+            if not quiet:
+                print(f"Error generating story thumbnail: {str(e)}")
             return None

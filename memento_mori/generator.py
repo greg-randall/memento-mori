@@ -303,13 +303,24 @@ class InstagramSiteGenerator:
         lazy_after = 30  # Start lazy loading after this many stories
         
         for i, (timestamp, story) in enumerate(stories_data.items()):
-            # Determine which media to use for the story thumbnail
-            display_media = self._get_display_media(story, i >= lazy_after)
+            # Check for story-specific thumbnail
+            story_thumb = story.get("story_thumb", None)
+            
+            if story_thumb and os.path.exists(os.path.join(self.output_dir, story_thumb)):
+                # Use the 9:16 story thumbnail
+                media_url = story_thumb
+            else:
+                # Fall back to regular thumbnail or original media
+                display_media = self._get_display_media(story, i >= lazy_after)
+                media_url = display_media["url"]
+            
+            # Determine if it's a video
+            is_video = bool(re.search(r"\.(mp4|mov|avi|webm)$", story["m"][0], re.I)) if story["m"] else False
             
             stories_list.append({
                 "index": story["i"],
-                "media": display_media["url"],
-                "is_video": display_media["is_video"],
+                "media": media_url,
+                "is_video": is_video,
                 "date": story.get("d", ""),
                 "caption": story.get("tt", ""),
                 "timestamp": timestamp,
