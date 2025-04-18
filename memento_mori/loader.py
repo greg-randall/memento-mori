@@ -618,7 +618,13 @@ class InstagramDataLoader:
             if self.verbose:
                 print(f"\n   Extracting stories list from data structure...")
             
-            if isinstance(stories_data, list):
+            # Check for "ig_stories" key specifically
+            if isinstance(stories_data, dict) and "ig_stories" in stories_data:
+                stories_list = stories_data["ig_stories"]
+                if self.verbose:
+                    print(f"   Found stories in 'ig_stories' key: {len(stories_list)} items")
+            # Also keep the existing checks for other formats
+            elif isinstance(stories_data, list):
                 stories_list = stories_data
                 if self.verbose:
                     print(f"   Using top-level list with {len(stories_list)} items")
