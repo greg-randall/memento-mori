@@ -72,6 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear previous media
         storyMedia.innerHTML = '';
         
+        // Ensure the story media container has the correct class
+        storyMedia.className = 'story-media-container';
+        
         // Create media element based on type
         const mediaUrl = storyData.m[0]; // Use first media item
         const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.mov') || 
