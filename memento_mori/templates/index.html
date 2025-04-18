@@ -19,7 +19,11 @@
     <!-- Script to make post data available to JavaScript -->
     <script>
         window.postData = {{ post_data_json|safe }};
+        {% if stories_data_json %}
         window.storiesData = {{ stories_data_json|safe }};
+        {% else %}
+        window.storiesData = {};
+        {% endif %}
     </script>
     <script src="js/modal.js"></script>
   </head>

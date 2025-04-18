@@ -145,6 +145,9 @@ class InstagramSiteGenerator:
         # Current date for footer
         generation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
+        # Get stories data or empty dict if not available
+        stories_data = self.data_package.get("stories", {})
+
         # Render the main template
         template = self.jinja_env.get_template("index.html")
         html_content = template.render(
@@ -158,6 +161,7 @@ class InstagramSiteGenerator:
             has_stories=story_count > 0,  # Flag to show stories link
             grid_html=grid_html,
             post_data_json=json.dumps(self.data_package["posts"], ensure_ascii=False),
+            stories_data_json=json.dumps(stories_data, ensure_ascii=False),  # Add stories data
             generation_date=generation_date,
             gtag_id=self.gtag_id,  # Add Google tag ID
         )
