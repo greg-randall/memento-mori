@@ -1,0 +1,37 @@
+{% for story in stories %}
+  <div class="grid-item story-item" data-index="{{ story.i }}">
+    <div class="grid-item-content">
+      {% if story.v %}
+        <!-- Video story -->
+        <div class="media-container video-container">
+          {% if story.thumb %}
+            <img src="{{ story.thumb }}" alt="Story thumbnail" {{ story.lazy_load|safe }}>
+          {% else %}
+            <div class="video-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M8 5v14l11-7z" fill="currentColor"/>
+              </svg>
+            </div>
+          {% endif %}
+          <div class="video-indicator">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+              <path d="M8 5v14l11-7z" fill="white"/>
+            </svg>
+          </div>
+        </div>
+      {% else %}
+        <!-- Image story -->
+        <div class="media-container">
+          <img src="{{ story.thumb or story.m }}" alt="Story thumbnail" {{ story.lazy_load|safe }}>
+        </div>
+      {% endif %}
+      
+      <div class="story-info">
+        <div class="story-date">{{ story.d }}</div>
+        {% if story.tt %}
+          <div class="story-caption">{{ story.tt }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endfor %}
