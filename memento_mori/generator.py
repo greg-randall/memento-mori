@@ -186,6 +186,9 @@ class InstagramSiteGenerator:
         
         # Render stories template if stories data exists
         if stories_data:
+            print(f"\n🔍 STORIES RENDERING")
+            print(f"   Found {len(stories_data)} stories to render")
+            
             # Prepare data for the stories template
             stories_list = []
             for i, (timestamp, story) in enumerate(stories_data.items()):
@@ -202,12 +205,24 @@ class InstagramSiteGenerator:
                     "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
                 })
             
-            # Render stories template
-            stories_template = self.jinja_env.get_template("stories.html")
-            stories_html = stories_template.render(stories=stories_list)
+            print(f"   Prepared {len(stories_list)} stories for template")
             
-            # Combine grid and stories HTML
-            return f'<div class="section-title"><h2>Posts</h2></div>{grid_html}<div class="section-title"><h2>Stories</h2></div>{stories_html}'
+            # Render stories template
+            try:
+                stories_template = self.jinja_env.get_template("stories.html")
+                stories_html = stories_template.render(stories=stories_list)
+                print(f"   Successfully rendered stories template")
+                
+                # Combine grid and stories HTML
+                combined_html = f'<div class="section-title"><h2>Posts</h2></div>{grid_html}<div class="section-title"><h2>Stories</h2></div>{stories_html}'
+                return combined_html
+            except Exception as e:
+                print(f"   Error rendering stories template: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return grid_html
+        else:
+            print("No stories data found, skipping stories section")
         
         return grid_html
 

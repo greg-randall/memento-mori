@@ -1,9 +1,11 @@
 # memento_mori/loader.py
 import json
 import re
+import os
 from datetime import datetime
 import html
 from ftfy import fix_text
+from pathlib import Path
 
 
 def fix_double_encoded_utf8(text):
@@ -557,25 +559,85 @@ class InstagramDataLoader:
         stories_path = self.file_mapper.get_file_path("stories")
         if not stories_path:
             if self.verbose:
-                print("Stories data not found")
+                print("\n🔍 STORIES DATA SEARCH")
+                print("   No stories file found in standard locations")
+                print("   Checking all patterns for stories files:")
+                for pattern in self.file_mapper.FILE_PATTERNS["stories"]:
+                    print(f"   - Searching with pattern: {pattern}")
+                    matches = list(Path(self.file_mapper.base_dir).glob(pattern))
+                    if matches:
+                        print(f"     Found {len(matches)} matches:")
+                        for match in matches[:3]:  # Show first 3
+                            print(f"     • {match}")
+                        if len(matches) > 3:
+                            print(f"     • ... and {len(matches)-3} more")
+                    else:
+                        print(f"     No matches found")
+                
+                # Try a more aggressive search
+                print("\n   Performing deep search for any files containing 'stories':")
+                for root, dirs, files in os.walk(self.file_mapper.base_dir):
+                    for file in files:
+                        if 'stories' in file.lower() and file.endswith('.json'):
+                            print(f"     • Found potential stories file: {os.path.join(root, file)}")
             return {}
 
         try:
+            if self.verbose:
+                print(f"\n🔍 STORIES DATA LOADING")
+                print(f"   Found stories file: {stories_path}")
+                file_size = os.path.getsize(stories_path)
+                print(f"   File size: {file_size} bytes")
+            
             with open(stories_path, "r", encoding="utf-8") as f:
                 file_content = f.read()
                 # Fix encoding issues
                 file_content = fix_text(file_content)
+                
+                if self.verbose:
+                    print(f"   Parsing JSON content...")
+                
                 stories_data = json.loads(file_content, strict=False)
+                
+                if self.verbose:
+                    print(f"   JSON parsed successfully")
+                    if isinstance(stories_data, dict):
+                        print(f"   Data structure: Dictionary with {len(stories_data)} keys")
+                        print(f"   Top-level keys: {', '.join(list(stories_data.keys())[:5])}")
+                    elif isinstance(stories_data, list):
+                        print(f"   Data structure: List with {len(stories_data)} items")
+                    else:
+                        print(f"   Data structure: {type(stories_data)}")
 
             # Process stories data similar to posts
             simplified_stories = {}
             
             # Handle different possible structures
             stories_list = []
+            
+            if self.verbose:
+                print(f"\n   Extracting stories list from data structure...")
+            
             if isinstance(stories_data, list):
                 stories_list = stories_data
-            elif isinstance(stories_data, dict) and "stories" in stories_data:
-                stories_list = stories_data["stories"]
+                if self.verbose:
+                    print(f"   Using top-level list with {len(stories_list)} items")
+            elif isinstance(stories_data, dict):
+                # Try different possible keys where stories might be stored
+                possible_keys = ["stories", "story_activities", "story_media", "items"]
+                for key in possible_keys:
+                    if key in stories_data and isinstance(stories_data[key], list):
+                        stories_list = stories_data[key]
+                        if self.verbose:
+                            print(f"   Found stories in '{key}' key: {len(stories_list)} items")
+                        break
+                
+                if not stories_list and self.verbose:
+                    print(f"   Could not find stories list in dictionary keys")
+                    print(f"   Available keys: {', '.join(list(stories_data.keys()))}")
+            
+            if self.verbose:
+                print(f"\n   Processing {len(stories_list)} stories...")
             
             for index, story in enumerate(stories_list):
                 # Initialize a new story entry with shortened keys
@@ -587,39 +649,121 @@ class InstagramDataLoader:
                     "tt": "",    # title/caption
                 }
                 
-                # Extract timestamp
-                if "creation_timestamp" in story:
-                    story_entry["t"] = story["creation_timestamp"]
-                elif "media" in story and len(story["media"]) > 0 and "creation_timestamp" in story["media"][0]:
-                    story_entry["t"] = story["media"][0]["creation_timestamp"]
+                if self.verbose and index < 3:  # Only show details for first 3 stories
+                    print(f"\n   Story #{index+1}:")
+                    if isinstance(story, dict):
+                        print(f"   Keys: {', '.join(list(story.keys())[:10])}")
                 
-                # Format date
+                # Extract timestamp
+                timestamp_found = False
+                if isinstance(story, dict):
+                    # Try different possible timestamp fields
+                    timestamp_fields = ["creation_timestamp", "taken_at", "timestamp"]
+                    for field in timestamp_fields:
+                        if field in story and story[field]:
+                            story_entry["t"] = int(story[field])
+                            timestamp_found = True
+                            if self.verbose and index < 3:
+                                print(f"   Timestamp found in '{field}': {story_entry['t']}")
+                            break
+                    
+                    # Try media items if no timestamp at story level
+                    if not timestamp_found and "media" in story and isinstance(story["media"], list) and len(story["media"]) > 0:
+                        for media_item in story["media"]:
+                            if isinstance(media_item, dict):
+                                for field in timestamp_fields:
+                                    if field in media_item and media_item[field]:
+                                        story_entry["t"] = int(media_item[field])
+                                        timestamp_found = True
+                                        if self.verbose and index < 3:
+                                            print(f"   Timestamp found in media item '{field}': {story_entry['t']}")
+                                        break
+                                if timestamp_found:
+                                    break
+                
+                # Format date if timestamp found
                 if story_entry["t"]:
                     story_entry["d"] = datetime.utcfromtimestamp(
-                        story_entry["t"]
+                        int(story_entry["t"])
                     ).strftime("%B %d, %Y at %I:%M %p")
+                    if self.verbose and index < 3:
+                        print(f"   Formatted date: {story_entry['d']}")
                 
                 # Extract caption/title
-                if "caption" in story and story["caption"]:
-                    story_entry["tt"] = story["caption"]
-                elif "title" in story and story["title"]:
-                    story_entry["tt"] = story["title"]
+                caption_found = False
+                if isinstance(story, dict):
+                    # Try different possible caption fields
+                    caption_fields = ["caption", "title", "text"]
+                    for field in caption_fields:
+                        if field in story and story[field]:
+                            story_entry["tt"] = story[field]
+                            caption_found = True
+                            if self.verbose and index < 3:
+                                print(f"   Caption found in '{field}': {story_entry['tt'][:30]}...")
+                            break
+                    
+                    # Try string_map_data if no caption found directly
+                    if not caption_found and "string_map_data" in story and isinstance(story["string_map_data"], dict):
+                        string_map = story["string_map_data"]
+                        caption_keys = ["Caption", "Text", "Story Text"]
+                        for key in caption_keys:
+                            if key in string_map and isinstance(string_map[key], dict) and "value" in string_map[key]:
+                                story_entry["tt"] = string_map[key]["value"]
+                                caption_found = True
+                                if self.verbose and index < 3:
+                                    print(f"   Caption found in string_map_data['{key}']: {story_entry['tt'][:30]}...")
+                                break
                 
                 # Extract media URIs
-                if "media" in story:
-                    for media in story["media"]:
-                        if "uri" in media:
-                            story_entry["m"].append(media["uri"])
+                media_found = False
+                if isinstance(story, dict):
+                    # Try direct URI field
+                    if "uri" in story and story["uri"]:
+                        story_entry["m"].append(story["uri"])
+                        media_found = True
+                        if self.verbose and index < 3:
+                            print(f"   Media found directly in 'uri': {story_entry['m'][0]}")
+                    
+                    # Try media list
+                    if "media" in story and isinstance(story["media"], list):
+                        for media_item in story["media"]:
+                            if isinstance(media_item, dict) and "uri" in media_item and media_item["uri"]:
+                                story_entry["m"].append(media_item["uri"])
+                                media_found = True
+                                if self.verbose and index < 3 and len(story_entry["m"]) <= 3:
+                                    print(f"   Media found in media list: {media_item['uri']}")
+                    
+                    # Try media_map_data
+                    if not media_found and "media_map_data" in story and isinstance(story["media_map_data"], dict):
+                        for key, media_item in story["media_map_data"].items():
+                            if isinstance(media_item, dict) and "uri" in media_item and media_item["uri"]:
+                                story_entry["m"].append(media_item["uri"])
+                                media_found = True
+                                if self.verbose and index < 3 and len(story_entry["m"]) <= 3:
+                                    print(f"   Media found in media_map_data['{key}']: {media_item['uri']}")
                 
                 # Only add stories with valid timestamps and media
                 if story_entry["t"] and story_entry["m"]:
-                    simplified_stories[story_entry["t"]] = story_entry
+                    simplified_stories[str(story_entry["t"])] = story_entry
+                    if self.verbose and index < 3:
+                        print(f"   ✓ Story added with timestamp {story_entry['t']} and {len(story_entry['m'])} media items")
+                elif self.verbose and index < 3:
+                    if not story_entry["t"]:
+                        print(f"   ✗ Story skipped: No timestamp found")
+                    if not story_entry["m"]:
+                        print(f"   ✗ Story skipped: No media found")
             
             if self.verbose:
-                print(f"Extracted {len(simplified_stories)} stories with valid timestamps")
+                print(f"\n   Extracted {len(simplified_stories)} valid stories from {len(stories_list)} total")
             
             # Sort by timestamp (newest first)
-            sorted_stories = dict(sorted(simplified_stories.items(), key=lambda x: x[0], reverse=True))
+            sorted_stories = dict(sorted(simplified_stories.items(), key=lambda x: int(x[0]), reverse=True))
+            
+            if self.verbose and sorted_stories:
+                newest = datetime.utcfromtimestamp(int(list(sorted_stories.keys())[0])).strftime('%Y-%m-%d')
+                oldest = datetime.utcfromtimestamp(int(list(sorted_stories.keys())[-1])).strftime('%Y-%m-%d')
+                print(f"   Stories date range: {oldest} to {newest}")
+            
             return sorted_stories
             
         except Exception as e:
