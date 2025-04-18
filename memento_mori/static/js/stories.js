@@ -346,6 +346,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Close the story viewer
     function closeStory() {
+        // Pause any playing videos before closing
+        const videoElements = storyMedia.querySelectorAll('video');
+        videoElements.forEach(video => {
+            if (video && !video.paused) {
+                video.pause();
+            }
+        });
+        
         clearAutoProgressTimer();
         storyViewer.style.display = 'none';
         document.body.style.overflow = ''; // Restore scrolling
