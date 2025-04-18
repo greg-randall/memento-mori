@@ -972,7 +972,8 @@ main {
 /* Caption styles removed as they're now used for alt text */
 .story-info-overlay .story-date {
   font-size: 14px;
-  opacity: 0.8;
+  opacity: 1;
+  color: white;
   max-width: 800px;
   margin: 0 auto;
 }
