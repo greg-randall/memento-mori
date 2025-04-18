@@ -95,12 +95,20 @@ document.addEventListener('DOMContentLoaded', function() {
             video.autoplay = !isPaused; // Only autoplay if not paused
             video.muted = false;
             
+            // Force the video to take the full size of its container
+            video.style.width = '100%';
+            video.style.height = '100%';
+            video.style.maxHeight = '90vh';
+            video.style.objectFit = 'contain';
+
             // Variables to track video playback time
             let videoStartTime = 0;
             let totalPlayTime = 0;
             let videoLoopCount = 0;
             let videoTimer = null;
-            
+
+    
+    storyMedia.appendChild(videoWrapper);
             // Function to check if we should progress to next story
             const checkVideoProgress = function() {
                 if (isPaused) return; // Don't progress if paused
@@ -169,7 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store the video element in a variable accessible to the togglePause function
             currentVideoElement = video;
             
-            storyMedia.appendChild(video);
+                // Create a wrapper div to help control dimensions
+    const videoWrapper = document.createElement('div');
+    videoWrapper.style.width = '100%';
+    videoWrapper.style.height = '100%';
+    videoWrapper.style.display = 'flex';
+    videoWrapper.appendChild(video);
+    
+    storyMedia.appendChild(videoWrapper);
         } else {
             console.log('Loading image story:', mediaUrl);
             const img = document.createElement('img');
