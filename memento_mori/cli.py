@@ -169,12 +169,16 @@ def main():
             quality=args.quality, max_dimension=args.max_dimension
         )
         media_result = media_processor.process_media_files(
-            data["posts"], data["profile"]["profile_picture"]
+            data["posts"], data["profile"]["profile_picture"], data.get("stories", {})
         )
 
         # Update data with shortened filenames
         data["posts"] = media_result["updated_post_data"]
         data["profile"]["profile_picture"] = media_result["shortened_profile"]
+        
+        # Update stories data if it exists
+        if "stories" in data and media_result.get("updated_stories_data"):
+            data["stories"] = media_result["updated_stories_data"]
 
         # Generate website with the loaded data
         print("\n🌐 GENERATING WEBSITE")

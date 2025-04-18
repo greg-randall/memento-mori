@@ -95,8 +95,8 @@ class InstagramMediaProcessor:
         
         return new_path
 
-    def process_media_files(self, post_data, profile_picture):
-        """Process all media files from posts and profile picture."""
+    def process_media_files(self, post_data, profile_picture, stories_data=None):
+        """Process all media files from posts, stories, and profile picture."""
         # First, fix any incorrect file extensions in the extraction directory
         print("Checking and fixing file extensions...")
         extension_stats = self.fix_file_extensions(self.extraction_dir)
@@ -142,6 +142,32 @@ class InstagramMediaProcessor:
             # Update the post with shortened media URLs
             updated_post["m"] = updated_media
             updated_post_data[timestamp] = updated_post
+            
+        # Process stories data if provided
+        updated_stories_data = {}
+        if stories_data:
+            for timestamp, story in stories_data.items():
+                # Create a copy of the story
+                updated_story = story.copy()
+                updated_media = []
+                
+                for media_url in story["m"]:
+                    # Check if this media URL was fixed
+                    if str(self.extraction_dir / media_url) in path_mapping:
+                        # Get the new path relative to extraction_dir
+                        new_full_path = path_mapping[str(self.extraction_dir / media_url)]
+                        media_url = str(Path(new_full_path).relative_to(self.extraction_dir))
+                    
+                    # Add to processing list
+                    all_media.append(media_url)
+                    
+                    # Get shortened path
+                    shortened_url = self.shorten_filename(media_url)
+                    updated_media.append(shortened_url)
+                
+                # Update the story with shortened media URLs
+                updated_story["m"] = updated_media
+                updated_stories_data[timestamp] = updated_story
 
         total_media = len(all_media)
         print(
@@ -165,6 +191,7 @@ class InstagramMediaProcessor:
         # Return updated post data and statistics
         return {
             "updated_post_data": updated_post_data,
+            "updated_stories_data": updated_stories_data,
             "shortened_profile": shortened_profile,
             "stats": {
                 "thumbnail_count": self.thumbnail_count,

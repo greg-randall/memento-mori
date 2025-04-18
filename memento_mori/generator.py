@@ -114,6 +114,7 @@ class InstagramSiteGenerator:
         location_info = self.data_package.get("location", {"location": "Unknown"})
         date_range = self.data_package["date_range"]["range"]
         post_count = self.data_package["post_count"]
+        story_count = self.data_package.get("story_count", 0)
         
         # Get profile picture path and check for WebP version
         profile_picture = profile_info["profile_picture"]
@@ -137,8 +138,10 @@ class InstagramSiteGenerator:
             profile=profile_info,  # Pass the entire profile object
             date_range=date_range,
             post_count=post_count,
+            story_count=story_count,
             grid_html=grid_html,
             post_data_json=json.dumps(self.data_package["posts"], ensure_ascii=False),
+            stories_data_json=json.dumps(self.data_package.get("stories", {}), ensure_ascii=False),
             generation_date=generation_date,
             gtag_id=self.gtag_id,  # Add Google tag ID
         )
@@ -152,6 +155,7 @@ class InstagramSiteGenerator:
     def _render_grid(self):
         """Render the grid HTML using the grid.html template."""
         posts_data = self.data_package["posts"]
+        stories_data = self.data_package.get("stories", {})
         lazy_after = 30  # Start lazy loading after this many posts
 
         # Check if posts_data is valid
@@ -178,7 +182,34 @@ class InstagramSiteGenerator:
 
         # Render grid template
         grid_template = self.jinja_env.get_template("grid.html")
-        return grid_template.render(posts=grid_posts)
+        grid_html = grid_template.render(posts=grid_posts)
+        
+        # Render stories template if stories data exists
+        if stories_data:
+            # Prepare data for the stories template
+            stories_list = []
+            for i, (timestamp, story) in enumerate(stories_data.items()):
+                # Determine which media to use for the story thumbnail
+                display_media = self._get_display_media(story, i >= lazy_after)
+                
+                stories_list.append({
+                    "i": story["i"],
+                    "m": display_media["url"],
+                    "thumb": display_media["url"],
+                    "v": display_media["is_video"],
+                    "d": story.get("d", ""),
+                    "tt": story.get("tt", ""),
+                    "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
+                })
+            
+            # Render stories template
+            stories_template = self.jinja_env.get_template("stories.html")
+            stories_html = stories_template.render(stories=stories_list)
+            
+            # Combine grid and stories HTML
+            return f'<div class="section-title"><h2>Posts</h2></div>{grid_html}<div class="section-title"><h2>Stories</h2></div>{stories_html}'
+        
+        return grid_html
 
     def _get_display_media(self, post, use_lazy_loading=False):
         """Determine which media to use for the grid thumbnail."""

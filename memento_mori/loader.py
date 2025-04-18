@@ -547,6 +547,88 @@ class InstagramDataLoader:
         else:
             return data
 
+    def load_stories_data(self):
+        """
+        Load stories data from stories JSON files.
+
+        Returns:
+            dict: Processed stories data
+        """
+        stories_path = self.file_mapper.get_file_path("stories")
+        if not stories_path:
+            if self.verbose:
+                print("Stories data not found")
+            return {}
+
+        try:
+            with open(stories_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+                # Fix encoding issues
+                file_content = fix_text(file_content)
+                stories_data = json.loads(file_content, strict=False)
+
+            # Process stories data similar to posts
+            simplified_stories = {}
+            
+            # Handle different possible structures
+            stories_list = []
+            if isinstance(stories_data, list):
+                stories_list = stories_data
+            elif isinstance(stories_data, dict) and "stories" in stories_data:
+                stories_list = stories_data["stories"]
+            
+            for index, story in enumerate(stories_list):
+                # Initialize a new story entry with shortened keys
+                story_entry = {
+                    "i": index,  # story_index
+                    "m": [],     # media
+                    "t": "",     # creation_timestamp_unix
+                    "d": "",     # creation_timestamp_readable
+                    "tt": "",    # title/caption
+                }
+                
+                # Extract timestamp
+                if "creation_timestamp" in story:
+                    story_entry["t"] = story["creation_timestamp"]
+                elif "media" in story and len(story["media"]) > 0 and "creation_timestamp" in story["media"][0]:
+                    story_entry["t"] = story["media"][0]["creation_timestamp"]
+                
+                # Format date
+                if story_entry["t"]:
+                    story_entry["d"] = datetime.utcfromtimestamp(
+                        story_entry["t"]
+                    ).strftime("%B %d, %Y at %I:%M %p")
+                
+                # Extract caption/title
+                if "caption" in story and story["caption"]:
+                    story_entry["tt"] = story["caption"]
+                elif "title" in story and story["title"]:
+                    story_entry["tt"] = story["title"]
+                
+                # Extract media URIs
+                if "media" in story:
+                    for media in story["media"]:
+                        if "uri" in media:
+                            story_entry["m"].append(media["uri"])
+                
+                # Only add stories with valid timestamps and media
+                if story_entry["t"] and story_entry["m"]:
+                    simplified_stories[story_entry["t"]] = story_entry
+            
+            if self.verbose:
+                print(f"Extracted {len(simplified_stories)} stories with valid timestamps")
+            
+            # Sort by timestamp (newest first)
+            sorted_stories = dict(sorted(simplified_stories.items(), key=lambda x: x[0], reverse=True))
+            return sorted_stories
+            
+        except Exception as e:
+            print(f"Error loading stories data: {str(e)}")
+            if self.verbose:
+                import traceback
+                traceback.print_exc()
+            return {}
+
     def load_all_data(self):
         """
         Load all data and return a comprehensive data package.
@@ -557,6 +639,7 @@ class InstagramDataLoader:
         profile_info = self.load_profile_data()
         location_info = self.load_location_data()
         posts_data = self.extract_relevant_data()
+        stories_data = self.load_stories_data()
         follower_count = self.load_followers_data()
         
         # Add follower count to profile info
@@ -566,6 +649,7 @@ class InstagramDataLoader:
         profile_info = self.process_json_strings(profile_info)
         location_info = self.process_json_strings(location_info)
         posts_data = self.process_json_strings(posts_data)
+        stories_data = self.process_json_strings(stories_data)
 
         # Get date range for display
         if posts_data and isinstance(posts_data, dict) and len(posts_data) > 0:
@@ -596,6 +680,8 @@ class InstagramDataLoader:
             "profile": profile_info,
             "location": location_info,
             "posts": posts_data,
+            "stories": stories_data,
             "date_range": date_range,
             "post_count": len(posts_data),
+            "story_count": len(stories_data),
         }

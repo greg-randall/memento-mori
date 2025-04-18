@@ -34,6 +34,16 @@ class InstagramFileMapper:
             # Search in any subdirectory
             "**/*/followers*.json"
         ],
+        "stories": [
+            "**/content/stories*.json",
+            "**/media/stories*.json",
+            "**/your_instagram_activity/stories*.json",
+            "**/stories*.json",
+            "**/your_instagram_activity/stories/stories*.json",
+            "**/your_instagram_activity/content/stories*.json",
+            # Search in any subdirectory
+            "**/*/stories*.json"
+        ],
         # Add more patterns as needed
     }
 

@@ -19,6 +19,7 @@
     <!-- Script to make post data available to JavaScript -->
     <script>
         window.postData = {{ post_data_json|safe }};
+        window.storiesData = {{ stories_data_json|safe }};
     </script>
     <script src="js/modal.js"></script>
   </head>
@@ -46,6 +47,11 @@
             <div class="stat">
               <span class="stat-count" id="post-count">{{ post_count }}</span> posts
             </div>
+            {% if story_count > 0 %}
+            <div class="stat">
+              <span class="stat-count" id="story-count">{{ story_count }}</span> stories
+            </div>
+            {% endif %}
             {% if profile.follower_count is defined and profile.follower_count is not none %}
             <div class="stat">
               <span class="stat-count" id="follower-count">{{ profile.follower_count }}</span> followers
