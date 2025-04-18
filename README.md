@@ -11,8 +11,6 @@ docker compose run --rm memento-mori
 #Then open output/index.html in your browser
 ```
 
-
-
 ## ⚠️ IMPORTANT SECURITY WARNING ⚠️
 
 **DO NOT** share your raw Instagram export online! It contains sensitive data you probably don't want to share:
@@ -26,10 +24,11 @@ docker compose run --rm memento-mori
 Only share the generated output folder after processing with this tool.
 
 ## How It Works
-Memento Mori processes your Instagram data export and generates a static site with your posts, copying all your media files into an organized structure that can be viewed offline or hosted on your own website.
+Memento Mori processes your Instagram data export and generates a static site with your posts and stories, copying all your media files into an organized structure that can be viewed offline or hosted on your own website.
 
 ## Key Features
 - **Familiar Interface**: Grid layout with post details and carousel for multiple images
+- **Stories Support**: View your Instagram Stories with auto-progression and 9:16 aspect ratio display
 - **Media Optimization**: Converts images to WebP, generates thumbnails, and supports video playback
 - **Organization**: Sorts posts by various criteria with shareable links to specific content
 - **Profile Information**: Displays bio, website, and follower count from your Instagram profile
@@ -130,7 +129,8 @@ python -m memento_mori.cli --verbose
 After the tool finishes processing your Instagram data:
 1. The website will be generated in the output directory (default: ./output)
 2. Open the `index.html` file in this directory with your web browser to view your Instagram archive
-3. You can also upload the entire output directory to a web hosting service to share it online
+3. Click on "stories" in your profile stats to view your Stories archive
+4. You can also upload the entire output directory to a web hosting service to share it online
 
 ## PHP Version (Alternative)
 For those who prefer the deprecated PHP implementation, there are a few notes in the deprecated_php_utility folder, but basically extract your data into the folder with the php file, and run
