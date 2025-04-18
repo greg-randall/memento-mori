@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update story content
         storyDate.textContent = storyData.d || '';
         
+        // Get the previous media element for transition
+        const previousMedia = storyMedia.querySelector('.media-slide.active');
+        
         // Clear previous media
         storyMedia.innerHTML = '';
         
@@ -85,6 +88,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const mediaUrl = storyData.m[0]; // Use first media item
         const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.mov') || 
                        mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm');
+        
+        // Create a slide container for the media
+        const slide = document.createElement('div');
+        slide.className = 'media-slide active';
+        slide.style.opacity = '1';
+        slide.style.transform = 'translateX(0)';
         
         if (isVideo) {
             console.log('Loading video story:', mediaUrl);
@@ -114,7 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
             videoWrapper.style.display = 'flex';
             videoWrapper.appendChild(video);
             
-            storyMedia.appendChild(videoWrapper);
+            slide.appendChild(videoWrapper);
+            storyMedia.appendChild(slide);
             
             // Function to check if we should progress to next story
             const checkVideoProgress = function() {
@@ -207,7 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             img.alt = storyData.tt || 'Instagram Story';
-            storyMedia.appendChild(img);
+            slide.appendChild(img);
+            storyMedia.appendChild(slide);
             
             // Start auto-progress for images
             startAutoProgressTimer();
@@ -267,16 +278,40 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const newIndex = currentStoryIndex + direction;
         
+        // Get the current slide for animation
+        const currentSlide = storyMedia.querySelector('.media-slide.active');
+        
         if (newIndex >= 0 && newIndex < storyItems.length) {
-            currentStoryIndex = newIndex;
-            loadCurrentStory();
-            
-            // Update URL
-            const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
-            if (timestamp) {
-                const url = new URL(window.location.href);
-                url.searchParams.set('story', timestamp);
-                window.history.pushState({}, '', url);
+            // Animate the current slide out
+            if (currentSlide) {
+                currentSlide.style.transition = 'transform 0.5s ease';
+                currentSlide.style.transform = `translateX(${direction < 0 ? '100%' : '-100%'})`;
+                
+                // After animation completes, update to the new story
+                setTimeout(() => {
+                    currentStoryIndex = newIndex;
+                    loadCurrentStory();
+                    
+                    // Update URL
+                    const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
+                    if (timestamp) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('story', timestamp);
+                        window.history.pushState({}, '', url);
+                    }
+                }, 500);
+            } else {
+                // If no current slide (shouldn't happen), just load the new story
+                currentStoryIndex = newIndex;
+                loadCurrentStory();
+                
+                // Update URL
+                const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
+                if (timestamp) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('story', timestamp);
+                    window.history.pushState({}, '', url);
+                }
             }
         } else if (newIndex < 0) {
             // If trying to go before the first story, just restart current story
