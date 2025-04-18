@@ -94,7 +94,25 @@ document.addEventListener('DOMContentLoaded', function() {
             storyMedia.appendChild(video);
         } else {
             const img = document.createElement('img');
-            img.src = mediaUrl;
+            
+            // Check if there's a WebP version available for non-WebP images
+            if (!mediaUrl.endsWith('.webp') && 
+                (mediaUrl.endsWith('.jpg') || mediaUrl.endsWith('.jpeg') || 
+                 mediaUrl.endsWith('.png') || mediaUrl.endsWith('.gif'))) {
+                
+                // Try to use WebP version if it exists
+                const webpUrl = mediaUrl.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+                
+                img.onerror = function() {
+                    this.onerror = null; // Prevent infinite loop
+                    this.src = mediaUrl; // Fall back to original
+                };
+                
+                img.src = webpUrl;
+            } else {
+                img.src = mediaUrl;
+            }
+            
             img.alt = 'Story';
             storyMedia.appendChild(img);
             

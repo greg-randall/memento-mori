@@ -76,7 +76,7 @@
                 </svg>
               </div>
               {% endif %}
-              <img src="{{ story.media }}" alt="Story" {{ story.lazy_load|safe }}>
+              <img src="{{ story.media }}" alt="Story" {{ story.lazy_load|safe }} onerror="this.onerror=null; this.src='{{ story.original_media }}';">
             </div>
             <div class="story-info">
               <div class="story-date">{{ story.date }}</div>

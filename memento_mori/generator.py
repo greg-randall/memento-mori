@@ -314,6 +314,7 @@ class InstagramSiteGenerator:
                 "caption": story.get("tt", ""),
                 "timestamp": timestamp,
                 "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
+                "original_media": story["m"][0] if story["m"] else "",  # Include original media path
             })
         
         # Render the stories template
