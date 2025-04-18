@@ -809,6 +809,8 @@ main {
 .story-date {
     font-weight: bold;
     margin-bottom: 4px;
+    color: white;
+    opacity: 1;
 }
 
 .story-caption {
