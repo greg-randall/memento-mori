@@ -94,19 +94,21 @@ document.addEventListener('DOMContentLoaded', function() {
             video.controls = true;
             video.autoplay = !isPaused; // Only autoplay if not paused
             video.muted = false;
+            video.loop = true; // Make videos loop by default
+            
             video.addEventListener('play', function() {
                 console.log('Video started playing');
                 // Don't auto-progress for videos, let them play through
                 clearAutoProgressTimer();
             });
+            
             video.addEventListener('pause', function() {
                 console.log('Video paused');
             });
-            video.addEventListener('ended', function() {
-                console.log('Video ended, navigating to next story');
-                // Go to next story when video ends
-                navigateStory(1);
-            });
+            
+            // Store the video element in a variable accessible to the togglePause function
+            currentVideoElement = video;
+            
             storyMedia.appendChild(video);
         } else {
             console.log('Loading image story:', mediaUrl);
@@ -173,6 +175,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigate to previous/next story
     function navigateStory(direction) {
+        // If we're paused, don't auto-navigate to the next story
+        // This prevents videos from auto-advancing when they end
+        if (isPaused && direction > 0) {
+            console.log('Navigation blocked because story is paused');
+            return;
+        }
+        
         const newIndex = currentStoryIndex + direction;
         
         if (newIndex >= 0 && newIndex < storyItems.length) {
@@ -212,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const pauseIcon = document.getElementById('pauseIcon');
     const playIcon = document.getElementById('playIcon');
     let isPaused = false;
+    let currentVideoElement = null; // Track the current video element
     
     // Event listeners
     storyClose.addEventListener('click', closeStory);
@@ -233,16 +243,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clear the timer and stop progress
             clearAutoProgressTimer();
             storyProgress.style.transition = 'none';
+            
+            // If there's a video playing, pause it
+            const videoElement = storyMedia.querySelector('video');
+            if (videoElement) {
+                console.log('Pausing video');
+                videoElement.pause();
+            }
         } else {
             console.log('Resuming story playback');
             // Show pause icon when playing
             pauseIcon.style.display = 'block';
             playIcon.style.display = 'none';
-            
-            // Check if current story is a video
-            const currentStoryItem = storyItems[currentStoryIndex];
-            console.log('Current story index:', currentStoryIndex);
-            console.log('Current story item:', currentStoryItem);
             
             // Get the media element in the story viewer
             const videoElement = storyMedia.querySelector('video');
@@ -254,11 +266,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Starting auto progress timer for image');
                 startAutoProgressTimer();
             } else {
-                console.log('Not starting timer for video');
-                // For videos, we might want to play the video if it was paused
-                if (videoElement && videoElement.paused) {
-                    videoElement.play();
-                }
+                console.log('Playing video');
+                videoElement.play();
             }
         }
     }
