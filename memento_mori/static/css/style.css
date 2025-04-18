@@ -663,15 +663,7 @@ main {
   margin-bottom: 4px;
 }
 
-.story-caption {
-  font-size: 14px;
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
+/* Story caption styles removed as they're now used for alt text */
 
 .video-indicator {
   position: absolute;
