@@ -94,27 +94,75 @@ document.addEventListener('DOMContentLoaded', function() {
             video.controls = true;
             video.autoplay = !isPaused; // Only autoplay if not paused
             video.muted = false;
-            video.loop = true; // Make videos loop by default
+            
+            // Variables to track video playback time
+            let videoStartTime = 0;
+            let totalPlayTime = 0;
+            let videoLoopCount = 0;
+            let videoTimer = null;
+            
+            // Function to check if we should progress to next story
+            const checkVideoProgress = function() {
+                if (isPaused) return; // Don't progress if paused
+                
+                const videoLength = video.duration;
+                console.log(`Video duration: ${videoLength}s, Auto-progress delay: ${autoProgressDelay/1000}s`);
+                
+                if (videoLength > autoProgressDelay/1000) {
+                    // For longer videos, we'll let them play through once
+                    console.log('Video is longer than auto-progress delay, will play once');
+                    video.loop = false;
+                } else {
+                    // For shorter videos, loop until we reach the delay time
+                    console.log('Video is shorter than auto-progress delay, will loop');
+                    video.loop = true;
+                    
+                    // Set up a timer to move to next story after delay
+                    videoTimer = setTimeout(() => {
+                        if (!isPaused) {
+                            console.log(`Auto-progress timer completed after ${autoProgressDelay/1000}s`);
+                            navigateStory(1);
+                        }
+                    }, autoProgressDelay);
+                }
+            };
+            
+            video.addEventListener('loadedmetadata', function() {
+                // Once we know the video duration, decide how to handle it
+                checkVideoProgress();
+                
+                // Start progress bar animation
+                storyProgress.style.transition = `width ${autoProgressDelay}ms linear`;
+                storyProgress.style.width = '100%';
+            });
             
             video.addEventListener('play', function() {
                 console.log('Video started playing');
-                // Don't auto-progress for videos, let them play through
-                clearAutoProgressTimer();
+                videoStartTime = Date.now();
             });
             
             video.addEventListener('pause', function() {
                 console.log('Video paused');
+                // If we have a timer running, clear it when video is paused
+                if (videoTimer) {
+                    clearTimeout(videoTimer);
+                    videoTimer = null;
+                }
             });
             
             video.addEventListener('ended', function() {
-                console.log('Video ended, checking if we should navigate');
-                // Only navigate to next story if not paused
-                if (!isPaused) {
-                    console.log('Not paused, navigating to next story');
-                    navigateStory(1);
+                console.log('Video ended');
+                
+                if (video.loop) {
+                    // If looping, just count the loop
+                    videoLoopCount++;
+                    console.log(`Video loop #${videoLoopCount}`);
                 } else {
-                    console.log('Paused, not navigating to next story');
-                    // Video will loop automatically since we set loop=true
+                    // If not looping (longer video), navigate to next story
+                    if (!isPaused) {
+                        console.log('Video finished playing, navigating to next story');
+                        navigateStory(1);
+                    }
                 }
             });
             
@@ -181,6 +229,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearAutoProgressTimer() {
         console.log('Clearing auto-progress timer');
         clearTimeout(autoProgressTimer);
+        
+        // Also clear any video timer if it exists
+        const videoElement = storyMedia.querySelector('video');
+        if (videoElement && videoElement.videoTimer) {
+            clearTimeout(videoElement.videoTimer);
+            videoElement.videoTimer = null;
+        }
+        
         storyProgress.style.transition = 'none';
         storyProgress.style.width = '0%';
     }
@@ -259,6 +315,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Don't pause videos, let them continue playing in loop
             console.log('Video will continue playing but auto-advance is disabled');
+            
+            // Get the current video if there is one
+            const videoElement = storyMedia.querySelector('video');
+            if (videoElement && videoElement.videoTimer) {
+                clearTimeout(videoElement.videoTimer);
+                videoElement.videoTimer = null;
+            }
         } else {
             console.log('Resuming story playback');
             // Show pause icon when playing
