@@ -30,6 +30,24 @@
         max-height: 80vh;
         object-fit: contain;
       }
+      
+      /* Pause button styles */
+      .story-pause {
+        position: absolute;
+        top: 20px;
+        right: 70px;
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+        z-index: 2001;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+      }
     </style>
   </head>
   <body>
@@ -102,6 +120,14 @@
     <!-- Story Viewer -->
     <div class="story-viewer" id="storyViewer">
       <div class="story-close" id="storyClose">✕</div>
+      <div class="story-pause" id="storyPause">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" id="pauseIcon">
+          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="white"/>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" id="playIcon" style="display:none;">
+          <path d="M8 5v14l11-7z" fill="white"/>
+        </svg>
+      </div>
       <div class="story-nav story-prev" id="storyPrev">❮</div>
       <div class="story-nav story-next" id="storyNext">❯</div>
       <div class="story-progress-container">

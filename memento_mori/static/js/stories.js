@@ -56,6 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear any existing timer
         clearAutoProgressTimer();
         
+        // Reset pause state when loading a new story
+        if (isPaused) {
+            isPaused = false;
+            pauseIcon.style.display = 'block';
+            playIcon.style.display = 'none';
+        }
+        
         const storyItem = storyItems[currentStoryIndex];
         const timestamp = storyItem.getAttribute('data-timestamp');
         const storyData = window.storiesData[timestamp];
@@ -130,6 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start auto-progress timer with visual indicator
     function startAutoProgressTimer() {
+        // Don't start timer if paused
+        if (isPaused) return;
+        
         // Animate progress bar
         storyProgress.style.transition = `width ${autoProgressDelay}ms linear`;
         storyProgress.style.width = '100%';
@@ -183,10 +193,45 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.pushState({}, '', url);
     }
     
+    // Get pause button element
+    const storyPause = document.getElementById('storyPause');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const playIcon = document.getElementById('playIcon');
+    let isPaused = false;
+    
     // Event listeners
     storyClose.addEventListener('click', closeStory);
     storyPrev.addEventListener('click', () => navigateStory(-1));
     storyNext.addEventListener('click', () => navigateStory(1));
+    storyPause.addEventListener('click', togglePause);
+    
+    // Toggle pause function
+    function togglePause() {
+        isPaused = !isPaused;
+        
+        if (isPaused) {
+            // Show play icon when paused
+            pauseIcon.style.display = 'none';
+            playIcon.style.display = 'block';
+            
+            // Clear the timer and stop progress
+            clearAutoProgressTimer();
+            storyProgress.style.transition = 'none';
+        } else {
+            // Show pause icon when playing
+            pauseIcon.style.display = 'block';
+            playIcon.style.display = 'none';
+            
+            // Restart the timer for images
+            const mediaUrl = storyItems[currentStoryIndex].querySelector('img').src;
+            const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.mov') || 
+                           mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm');
+            
+            if (!isVideo) {
+                startAutoProgressTimer();
+            }
+        }
+    }
     
     // Keyboard navigation
     document.addEventListener('keydown', function(e) {
