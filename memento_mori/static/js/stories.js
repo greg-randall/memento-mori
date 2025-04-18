@@ -239,58 +239,54 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const newIndex = currentStoryIndex + direction;
+        // Calculate the new index with circular navigation
+        let newIndex = currentStoryIndex + direction;
+        
+        // Implement circular navigation
+        if (newIndex < 0) {
+            newIndex = storyItems.length - 1; // Wrap to the last story
+            console.log('Wrapping to the last story');
+        } else if (newIndex >= storyItems.length) {
+            newIndex = 0; // Wrap to the first story
+            console.log('Wrapping to the first story');
+        }
         
         // Get the current slide for animation
         const currentSlide = storyMedia.querySelector('.media-slide.active');
         
-        if (newIndex >= 0 && newIndex < storyItems.length) {
-            // Animate the current slide out
-            if (currentSlide) {
-                currentSlide.style.transition = 'transform 0.5s ease';
-                currentSlide.style.transform = `translateX(${direction < 0 ? '100%' : '-100%'})`;
-                
-                // Create and prepare the new slide with initial position
-                const newSlide = document.createElement('div');
-                newSlide.className = 'media-slide';
-                newSlide.style.transition = 'none'; // No transition initially
-                newSlide.style.transform = `translateX(${direction > 0 ? '100%' : '-100%'})`; // Start from right or left
-                newSlide.style.opacity = '1';
-                
-                // Load the content into the new slide
-                loadStoryContent(newSlide, newIndex);
-                storyMedia.appendChild(newSlide);
-                
-                // Force a reflow to ensure the initial transform is applied
-                newSlide.offsetHeight;
-                
-                // Now animate the slide into view
-                newSlide.style.transition = 'transform 0.5s ease';
-                newSlide.style.transform = 'translateX(0)';
-                
-                // After animation completes, update to the new story
-                setTimeout(() => {
-                    currentStoryIndex = newIndex;
-                    
-                    // Remove old slides
-                    const oldSlides = storyMedia.querySelectorAll('.media-slide:not(:last-child)');
-                    oldSlides.forEach(slide => slide.remove());
-                    
-                    // Make the new slide active
-                    newSlide.classList.add('active');
-                    
-                    // Update URL
-                    const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
-                    if (timestamp) {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('story', timestamp);
-                        window.history.pushState({}, '', url);
-                    }
-                }, 500);
-            } else {
-                // If no current slide (shouldn't happen), just load the new story
+        // Animate the current slide out
+        if (currentSlide) {
+            currentSlide.style.transition = 'transform 0.5s ease';
+            currentSlide.style.transform = `translateX(${direction < 0 ? '100%' : '-100%'})`;
+            
+            // Create and prepare the new slide with initial position
+            const newSlide = document.createElement('div');
+            newSlide.className = 'media-slide';
+            newSlide.style.transition = 'none'; // No transition initially
+            newSlide.style.transform = `translateX(${direction > 0 ? '100%' : '-100%'})`; // Start from right or left
+            newSlide.style.opacity = '1';
+            
+            // Load the content into the new slide
+            loadStoryContent(newSlide, newIndex);
+            storyMedia.appendChild(newSlide);
+            
+            // Force a reflow to ensure the initial transform is applied
+            newSlide.offsetHeight;
+            
+            // Now animate the slide into view
+            newSlide.style.transition = 'transform 0.5s ease';
+            newSlide.style.transform = 'translateX(0)';
+            
+            // After animation completes, update to the new story
+            setTimeout(() => {
                 currentStoryIndex = newIndex;
-                loadCurrentStory();
+                
+                // Remove old slides
+                const oldSlides = storyMedia.querySelectorAll('.media-slide:not(:last-child)');
+                oldSlides.forEach(slide => slide.remove());
+                
+                // Make the new slide active
+                newSlide.classList.add('active');
                 
                 // Update URL
                 const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
@@ -299,13 +295,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     url.searchParams.set('story', timestamp);
                     window.history.pushState({}, '', url);
                 }
-            }
-        } else if (newIndex < 0) {
-            // If trying to go before the first story, just restart current story
-            loadCurrentStory();
+            }, 500);
         } else {
-            // If we've reached the end, close the viewer
-            closeStory();
+            // If no current slide (shouldn't happen), just load the new story
+            currentStoryIndex = newIndex;
+            loadCurrentStory();
+            
+            // Update URL
+            const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
+            if (timestamp) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('story', timestamp);
+                window.history.pushState({}, '', url);
+            }
         }
     }
     
