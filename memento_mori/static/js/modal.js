@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize by creating mapping and attaching listeners
     function initialize() {
-        // Create a mapping from post_index to timestamp
+        // Create a mapping from post index to timestamp
         Object.entries(window.postData).forEach(([timestamp, post]) => {
-            postIndexToTimestamp[post.i] = timestamp;  // Changed from post_index
+            postIndexToTimestamp[post.i] = timestamp;
         });
 
         // Attach click listeners to grid items
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getLikesByIndex(index) {
         const timestamp = postIndexToTimestamp[index];
         if (timestamp && window.postData[timestamp]) {
-            return parseInt(window.postData[timestamp].l) || 0;  // Changed from Likes
+            return parseInt(window.postData[timestamp].l) || 0;
         }
         return 0;
     }
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getCommentsByIndex(index) {
         const timestamp = postIndexToTimestamp[index];
         if (timestamp && window.postData[timestamp]) {
-            return parseInt(window.postData[timestamp].c) || 0;  // Changed from Comments
+            return parseInt(window.postData[timestamp].c) || 0;
         }
         return 0;
     }
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getViewsByIndex(index) {
         const timestamp = postIndexToTimestamp[index];
         if (timestamp && window.postData[timestamp]) {
-            return parseInt(window.postData[timestamp].im) || 0;  // Changed from Impressions
+            return parseInt(window.postData[timestamp].im) || 0;
         }
         return 0;
     }
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update the browser history without reloading the page
         window.history.pushState({}, '', url);
     }
-    //Creates the appropriate media element (video or image) based on the file type
+    // Creates the appropriate media element (video or image) based on the file type
     function createMediaElement(mediaUrl) {
         // Check if the media is a video based on file extension
         if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.mov') ||
@@ -392,45 +392,45 @@ document.addEventListener('DOMContentLoaded', function () {
         postMedia.appendChild(mediaContainer);
 
         // Set post caption
-        if (post.tt) {  // Changed from title
-            postCaption.innerHTML = post.tt.replace(/\n/g, '<br>');  // Changed from title
+        if (post.tt) {
+            postCaption.innerHTML = post.tt.replace(/\n/g, '<br>');
         } else {
             postCaption.innerHTML = '';
         }
 
         // Set post stats
-        if (post.im) {  // Changed from Impressions
+        if (post.im) {
             const impressionsDiv = document.createElement('div');
             impressionsDiv.className = 'post-stat';
             impressionsDiv.innerHTML = `
                 <span class="post-stat-icon">👁️</span>
-                <span>${post.im} views</span>  <!-- Changed from Impressions -->
+                <span>${post.im} views</span>
             `;
             postStats.appendChild(impressionsDiv);
         }
 
-        if (post.l) {  // Changed from Likes
+        if (post.l) {
             const likesDiv = document.createElement('div');
             likesDiv.className = 'post-stat';
             likesDiv.innerHTML = `
                 <span class="post-stat-icon">♥</span>
-                <span>${post.l}</span>  <!-- Changed from Likes -->
+                <span>${post.l}</span>
             `;
             postStats.appendChild(likesDiv);
         }
 
-        if (post.c) {  // Changed from Comments
+        if (post.c) {
             const commentsDiv = document.createElement('div');
             commentsDiv.className = 'post-stat';
             commentsDiv.innerHTML = `
                 <span class="post-stat-icon">💬</span>
-                <span>${post.c} comments</span>  <!-- Changed from Comments -->
+                <span>${post.c} comments</span>
             `;
             postStats.appendChild(commentsDiv);
         }
 
         // Set post date
-        postDate.textContent = post.d;  // Changed from creation_timestamp_readable
+        postDate.textContent = post.d;
 
         // Show/hide stats container based on whether there are any stats
         postStats.style.display = postStats.children.length > 0 ? 'flex' : 'none';
