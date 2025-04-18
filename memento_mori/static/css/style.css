@@ -863,14 +863,13 @@ main {
   object-fit: cover;
 }
 
-/* Story Viewer */
 .story-viewer {
   display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh; /* Explicitly use viewport height */
   background-color: rgba(0, 0, 0, 0.95);
   z-index: 2000;
   flex-direction: column;
@@ -949,6 +948,8 @@ main {
 .story-media-container {
   max-width: 100%;
   max-height: 100%;
+  width: 100%;  /* Add this */
+  height: 100%; /* Add this */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -956,7 +957,8 @@ main {
 
 .story-media-container img,
 .story-media-container video {
-  max-width: 100%;
+  width: 100%;
+  height: 100%; 
   max-height: 90vh;
   object-fit: contain;
 }
