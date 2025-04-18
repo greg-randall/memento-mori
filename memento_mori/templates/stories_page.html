@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memento Mori - {{ username }}'s Instagram Archive</title>
+    <title>Memento Mori - {{ username }}'s Instagram Stories</title>
     <link rel="stylesheet" href="css/style.css">
     {% if gtag_id %}
     <!-- Google tag (gtag.js) -->
@@ -16,9 +16,8 @@
       gtag('config', '{{ gtag_id }}');
     </script>
     {% endif %}
-    <!-- Script to make post data available to JavaScript -->
+    <!-- Script to make stories data available to JavaScript -->
     <script>
-        window.postData = {{ post_data_json|safe }};
         window.storiesData = {{ stories_data_json|safe }};
     </script>
     <script src="js/modal.js"></script>
@@ -45,17 +44,15 @@
           {% endif %}
           <div class="stats">
             <div class="stat">
-              <a href="index.html" class="nav-link active">
+              <a href="index.html" class="nav-link">
                 <span class="stat-count" id="post-count">{{ post_count }}</span> posts
               </a>
             </div>
-            {% if has_stories %}
             <div class="stat">
-              <a href="stories.html" class="nav-link">
+              <a href="stories.html" class="nav-link active">
                 <span class="stat-count" id="story-count">{{ story_count }}</span> stories
               </a>
             </div>
-            {% endif %}
             {% if profile.follower_count is defined and profile.follower_count is not none %}
             <div class="stat">
               <span class="stat-count" id="follower-count">{{ profile.follower_count }}</span> followers
@@ -64,22 +61,35 @@
           </div>
         </div>
       </div>
-      <div class="sort-options">
-        <div class="sort-row">
-          <a href="#" class="sort-link active" data-sort="newest">Newest</a>
-          <a href="#" class="sort-link" data-sort="oldest">Oldest</a>
-          <a href="#" class="sort-link" data-sort="most-likes">Most Likes</a>
-          <a href="#" class="sort-link" data-sort="most-comments">Most Comments</a>
-          <a href="#" class="sort-link" data-sort="most-views">Most Views</a>
-          <a href="#" class="sort-link" data-sort="random">Random</a>
+      
+      <div class="stories-container">
+        <h2 class="section-title">Stories</h2>
+        <div class="stories-grid">
+          {% for story in stories %}
+          <div class="story-item" data-index="{{ story.index }}" data-timestamp="{{ story.timestamp }}">
+            <div class="story-media">
+              {% if story.is_video %}
+              <div class="video-indicator">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M8 5v14l11-7z" fill="white"/>
+                </svg>
+              </div>
+              {% endif %}
+              <img src="{{ story.media }}" alt="Story" {{ story.lazy_load|safe }}>
+            </div>
+            <div class="story-info">
+              <div class="story-date">{{ story.date }}</div>
+              {% if story.caption %}
+              <div class="story-caption">{{ story.caption }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
         </div>
-      </div>
-      <div class="posts-grid" id="postsGrid">
-        {{ grid_html|safe }}
       </div>
     </main>
 
-    <!-- Modal for post details -->
+    <!-- Modal for story details -->
     <div class="post-modal" id="postModal">
         <div class="close-modal" id="closeModal">✕</div>
         <div class="modal-nav modal-prev" id="modalPrev">❮</div>

@@ -80,6 +80,10 @@ class InstagramSiteGenerator:
 
             # Generate HTML
             self._generate_html()
+            
+            # Generate stories HTML if we have stories data
+            if "stories" in self.data_package and self.data_package["stories"]:
+                self._generate_stories_html()
 
             print(f"Website successfully generated at {self.output_dir}")
             return True
@@ -139,9 +143,9 @@ class InstagramSiteGenerator:
             date_range=date_range,
             post_count=post_count,
             story_count=story_count,
+            has_stories=story_count > 0,  # Flag to show stories link
             grid_html=grid_html,
             post_data_json=json.dumps(self.data_package["posts"], ensure_ascii=False),
-            stories_data_json=json.dumps(self.data_package.get("stories", {}), ensure_ascii=False),
             generation_date=generation_date,
             gtag_id=self.gtag_id,  # Add Google tag ID
         )
@@ -155,7 +159,6 @@ class InstagramSiteGenerator:
     def _render_grid(self):
         """Render the grid HTML using the grid.html template."""
         posts_data = self.data_package["posts"]
-        stories_data = self.data_package.get("stories", {})
         lazy_after = 30  # Start lazy loading after this many posts
 
         # Check if posts_data is valid
@@ -182,49 +185,7 @@ class InstagramSiteGenerator:
 
         # Render grid template
         grid_template = self.jinja_env.get_template("grid.html")
-        grid_html = grid_template.render(posts=grid_posts)
-        
-        # Render stories template if stories data exists
-        if stories_data:
-            print(f"\n🔍 STORIES RENDERING")
-            print(f"   Found {len(stories_data)} stories to render")
-            
-            # Prepare data for the stories template
-            stories_list = []
-            for i, (timestamp, story) in enumerate(stories_data.items()):
-                # Determine which media to use for the story thumbnail
-                display_media = self._get_display_media(story, i >= lazy_after)
-                
-                stories_list.append({
-                    "i": story["i"],
-                    "m": display_media["url"],
-                    "thumb": display_media["url"],
-                    "v": display_media["is_video"],
-                    "d": story.get("d", ""),
-                    "tt": story.get("tt", ""),
-                    "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
-                })
-            
-            print(f"   Prepared {len(stories_list)} stories for template")
-            
-            # Render stories template
-            try:
-                stories_template = self.jinja_env.get_template("stories.html")
-                stories_html = stories_template.render(stories=stories_list)
-                print(f"   Successfully rendered stories template")
-                
-                # Combine grid and stories HTML
-                combined_html = f'<div class="section-title"><h2>Posts</h2></div>{grid_html}<div class="section-title"><h2>Stories</h2></div>{stories_html}'
-                return combined_html
-            except Exception as e:
-                print(f"   Error rendering stories template: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                return grid_html
-        else:
-            print("No stories data found, skipping stories section")
-        
-        return grid_html
+        return grid_template.render(posts=grid_posts)
 
     def _get_display_media(self, post, use_lazy_loading=False):
         """Determine which media to use for the grid thumbnail."""
@@ -298,3 +259,69 @@ class InstagramSiteGenerator:
                     )
 
         return result
+    def _generate_stories_html(self):
+        """Generate a separate HTML file for stories."""
+        stories_data = self.data_package.get("stories", {})
+        
+        if not stories_data:
+            print("No stories data found, skipping stories.html generation")
+            return
+        
+        # Extract data for the stories template
+        profile_info = self.data_package["profile"]
+        date_range = self.data_package["date_range"]["range"]
+        story_count = len(stories_data)
+        post_count = self.data_package["post_count"]
+        
+        # Get profile picture path and check for WebP version
+        profile_picture = profile_info["profile_picture"]
+        
+        # Check if we have a WebP version of the profile picture
+        if profile_picture:
+            import re
+            webp_path = re.sub(r"\.(jpg|jpeg|png|gif)$", ".webp", profile_picture, flags=re.I)
+            if os.path.exists(os.path.join(self.output_dir, webp_path)):
+                profile_picture = webp_path
+
+        # Current date for footer
+        generation_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        
+        # Prepare stories data for the template
+        stories_list = []
+        lazy_after = 30  # Start lazy loading after this many stories
+        
+        for i, (timestamp, story) in enumerate(stories_data.items()):
+            # Determine which media to use for the story thumbnail
+            display_media = self._get_display_media(story, i >= lazy_after)
+            
+            stories_list.append({
+                "index": story["i"],
+                "media": display_media["url"],
+                "is_video": display_media["is_video"],
+                "date": story.get("d", ""),
+                "caption": story.get("tt", ""),
+                "timestamp": timestamp,
+                "lazy_load": Markup(' loading="lazy"') if i >= lazy_after else "",
+            })
+        
+        # Render the stories template
+        template = self.jinja_env.get_template("stories_page.html")
+        html_content = template.render(
+            username=profile_info["username"],
+            profile_picture=profile_picture,
+            bio=profile_info.get("bio", ""),
+            profile=profile_info,
+            date_range=date_range,
+            post_count=post_count,
+            story_count=story_count,
+            stories=stories_list,
+            stories_data_json=json.dumps(stories_data, ensure_ascii=False),
+            generation_date=generation_date,
+            gtag_id=self.gtag_id,
+        )
+        
+        # Write HTML file
+        with open(self.output_dir / "stories.html", "w", encoding="utf-8") as f:
+            f.write(html_content)
+        
+        print(f"Generated stories HTML file: {self.output_dir / 'stories.html'}")
