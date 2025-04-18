@@ -1014,12 +1014,20 @@ main {
 
 /* Navigation links */
 .nav-link {
-  color: inherit;
+  color: #0095f6;
   text-decoration: none;
   padding-bottom: 2px;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: #00376b;
+  text-decoration: underline;
 }
 
 .nav-link.active {
   font-weight: 600;
+  color: #262626;
   border-bottom: 2px solid #262626;
 }
