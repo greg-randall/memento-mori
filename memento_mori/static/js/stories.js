@@ -106,6 +106,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Video paused');
             });
             
+            video.addEventListener('ended', function() {
+                console.log('Video ended, checking if we should navigate');
+                // Only navigate to next story if not paused
+                if (!isPaused) {
+                    console.log('Not paused, navigating to next story');
+                    navigateStory(1);
+                } else {
+                    console.log('Paused, not navigating to next story');
+                    // Video will loop automatically since we set loop=true
+                }
+            });
+            
             // Store the video element in a variable accessible to the togglePause function
             currentVideoElement = video;
             
@@ -175,10 +187,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigate to previous/next story
     function navigateStory(direction) {
-        // If we're paused, don't auto-navigate to the next story
-        // This prevents videos from auto-advancing when they end
-        if (isPaused && direction > 0) {
-            console.log('Navigation blocked because story is paused');
+        // If we're paused and this is an automatic navigation (not user-initiated),
+        // don't advance to the next story
+        const isUserInitiated = event && (event.type === 'click' || event.type === 'keydown');
+        if (isPaused && direction > 0 && !isUserInitiated) {
+            console.log('Auto-navigation blocked because story is paused');
             return;
         }
         
@@ -244,12 +257,8 @@ document.addEventListener('DOMContentLoaded', function() {
             clearAutoProgressTimer();
             storyProgress.style.transition = 'none';
             
-            // If there's a video playing, pause it
-            const videoElement = storyMedia.querySelector('video');
-            if (videoElement) {
-                console.log('Pausing video');
-                videoElement.pause();
-            }
+            // Don't pause videos, let them continue playing in loop
+            console.log('Video will continue playing but auto-advance is disabled');
         } else {
             console.log('Resuming story playback');
             // Show pause icon when playing
