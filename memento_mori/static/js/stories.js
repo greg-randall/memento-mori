@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentStoryIndex = 0;
     let storyItems = [];
     let autoProgressTimer = null;
+    let isNavigating = false;
     const autoProgressDelay = 10000; // 10 seconds
     
     // Initialize story items from the grid
@@ -110,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearAutoProgressTimer() {
         console.log('Clearing auto-progress timer');
         clearTimeout(autoProgressTimer);
+        autoProgressTimer = null;
         
         // Also clear any video timer if it exists
         const videoElement = storyMedia.querySelector('video');
@@ -118,8 +120,12 @@ document.addEventListener('DOMContentLoaded', function() {
             videoElement.videoTimer = null;
         }
         
+        // Reset progress bar immediately
         storyProgress.style.transition = 'none';
         storyProgress.style.width = '0%';
+        
+        // Force a reflow to ensure the transition is reset
+        storyProgress.offsetHeight;
     }
     
     // Helper function to load story content into a slide
@@ -127,8 +133,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const storyItem = storyItems[index];
         const timestamp = storyItem.getAttribute('data-timestamp');
         const storyData = window.storiesData[timestamp];
-        
-        if (!storyData) return;
+    
+        if (!storyData) {
+            isNavigating = false; // Reset navigation lock if we can't load content
+            return;
+        }
         
         // Update story date
         storyDate.textContent = storyData.d || '';
@@ -167,6 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const videoLength = video.duration;
                 console.log(`Video duration: ${videoLength}s, Auto-progress delay: ${autoProgressDelay/1000}s`);
                 
+                // Clear any existing video timer first
+                if (video.videoTimer) {
+                    clearTimeout(video.videoTimer);
+                    video.videoTimer = null;
+                }
+                
                 if (videoLength > autoProgressDelay/1000) {
                     // For longer videos, we'll let them play through once
                     console.log('Video is longer than auto-progress delay, will play once');
@@ -177,17 +192,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     video.loop = true;
                     
                     // Set up a timer to move to next story after delay
-                    videoTimer = setTimeout(() => {
-                        if (!isPaused) {
-                            console.log(`Auto-progress timer completed after ${autoProgressDelay/1000}s`);
-                            navigateStory(1);
-                        }
-                    }, autoProgressDelay);
+                    if (!isPaused) {
+                        video.videoTimer = setTimeout(() => {
+                            if (!isPaused && !isNavigating) {
+                                console.log(`Auto-progress timer completed after ${autoProgressDelay/1000}s`);
+                                navigateStory(1);
+                            }
+                        }, autoProgressDelay);
+                    }
                 }
                 
                 // Start progress bar animation
-                storyProgress.style.transition = `width ${autoProgressDelay}ms linear`;
-                storyProgress.style.width = '100%';
+                if (!isPaused) {
+                    storyProgress.style.transition = `width ${autoProgressDelay}ms linear`;
+                    storyProgress.style.width = '100%';
+                }
             });
             
             // Store the video element in a variable accessible to the togglePause function
@@ -219,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
             slide.appendChild(img);
             
             // Start auto-progress for images
-            if (!isPaused) {
+            if (!isPaused && !isNavigating) {
                 startAutoProgressTimer();
             }
         }
@@ -231,27 +250,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Navigate to previous/next story
     function navigateStory(direction) {
+        // Prevent rapid clicks from causing issues
+        if (isNavigating) return;
+        isNavigating = true;
+        
         // If we're paused and this is an automatic navigation (not user-initiated),
         // don't advance to the next story
         const isUserInitiated = event && (event.type === 'click' || event.type === 'keydown');
         if (isPaused && direction > 0 && !isUserInitiated) {
             console.log('Auto-navigation blocked because story is paused');
+            isNavigating = false;
             return;
         }
+        
+        // Always clear any existing timers first
+        clearAutoProgressTimer();
         
         // Calculate the new index with circular navigation
         let newIndex = currentStoryIndex + direction;
         
-        // Implement circular navigation
-        if (newIndex < 0) {
-            newIndex = storyItems.length - 1; // Wrap to the last story
-            console.log('Wrapping to the last story');
-        } else if (newIndex >= storyItems.length) {
-            newIndex = 0; // Wrap to the first story
-            console.log('Wrapping to the first story');
-        }
-        
-        // Implement circular navigation
+        // Implement circular navigation (only once)
         if (newIndex < 0) {
             newIndex = storyItems.length - 1; // Wrap to the last story
             console.log('Wrapping to the last story');
@@ -289,14 +307,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // After animation completes, update to the new story
             setTimeout(() => {
                 currentStoryIndex = newIndex;
-                
+            
                 // Remove old slides
                 const oldSlides = storyMedia.querySelectorAll('.media-slide:not(:last-child)');
                 oldSlides.forEach(slide => slide.remove());
-                
+            
                 // Make the new slide active
                 newSlide.classList.add('active');
-                
+            
                 // Update URL
                 const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
                 if (timestamp) {
@@ -304,12 +322,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     url.searchParams.set('story', timestamp);
                     window.history.pushState({}, '', url);
                 }
+            
+                // Reset navigation lock
+                isNavigating = false;
             }, 500);
         } else {
             // If no current slide (shouldn't happen), just load the new story
             currentStoryIndex = newIndex;
             loadCurrentStory();
-            
+        
             // Update URL
             const timestamp = storyItems[currentStoryIndex].getAttribute('data-timestamp');
             if (timestamp) {
@@ -317,6 +338,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 url.searchParams.set('story', timestamp);
                 window.history.pushState({}, '', url);
             }
+        
+            // Reset navigation lock
+            isNavigating = false;
         }
     }
     
