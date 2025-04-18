@@ -5,7 +5,7 @@
         <!-- Video story -->
         <div class="media-container video-container">
           {% if story.thumb %}
-            <img src="{{ story.thumb }}" alt="Story thumbnail" {{ story.lazy_load|safe }}>
+            <img src="{{ story.thumb }}" alt="{{ story.tt|default('Instagram Story') }}" {{ story.lazy_load|safe }}>
           {% else %}
             <div class="video-placeholder">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -22,15 +22,12 @@
       {% else %}
         <!-- Image story -->
         <div class="media-container">
-          <img src="{{ story.thumb or story.m }}" alt="Story thumbnail" {{ story.lazy_load|safe }}>
+          <img src="{{ story.thumb or story.m }}" alt="{{ story.tt|default('Instagram Story') }}" {{ story.lazy_load|safe }}>
         </div>
       {% endif %}
       
       <div class="story-info">
         <div class="story-date">{{ story.d }}</div>
-        {% if story.tt %}
-          <div class="story-caption">{{ story.tt }}</div>
-        {% endif %}
       </div>
     </div>
   </div>

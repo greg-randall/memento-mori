@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
         storyProgress.style.width = '0%';
         
         // Update story content
-        storyCaption.textContent = storyData.tt || '';
         storyDate.textContent = storyData.d || '';
         
         // Clear previous media
@@ -207,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 img.src = mediaUrl;
             }
             
-            img.alt = 'Story';
+            img.alt = storyData.tt || 'Instagram Story';
             storyMedia.appendChild(img);
             
             // Start auto-progress for images

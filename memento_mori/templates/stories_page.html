@@ -103,13 +103,10 @@
                 </svg>
               </div>
               {% endif %}
-              <img src="{{ story.media }}" alt="Story" {{ story.lazy_load|safe }} onerror="this.onerror=null; this.src='{{ story.original_media }}';">
+              <img src="{{ story.media }}" alt="{{ story.caption|default('Instagram Story') }}" {{ story.lazy_load|safe }} onerror="this.onerror=null; this.src='{{ story.original_media }}';">
             </div>
             <div class="story-info">
               <div class="story-date">{{ story.date }}</div>
-              {% if story.caption %}
-              <div class="story-caption">{{ story.caption }}</div>
-              {% endif %}
             </div>
           </div>
           {% endfor %}
@@ -136,7 +133,6 @@
       <div class="story-content">
         <div class="story-media-container" id="storyMedia"></div>
         <div class="story-info-overlay">
-          <div class="story-caption" id="storyCaption"></div>
           <div class="story-date" id="storyDate"></div>
         </div>
       </div>

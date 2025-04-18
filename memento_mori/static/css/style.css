@@ -973,13 +973,7 @@ main {
   color: white;
 }
 
-.story-info-overlay .story-caption {
-  font-size: 16px;
-  margin-bottom: 8px;
-  max-width: 800px;
-  margin: 0 auto 8px;
-}
-
+/* Caption styles removed as they're now used for alt text */
 .story-info-overlay .story-date {
   font-size: 14px;
   opacity: 0.8;
