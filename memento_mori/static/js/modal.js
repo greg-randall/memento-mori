@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return img;
         }
     }
-    // Update the modal content with the post data
+    // Update modal content with the post data
     function updateModalContent(post, initialImageIndex = 0) {
         // Clear previous content
         postMedia.innerHTML = '';
