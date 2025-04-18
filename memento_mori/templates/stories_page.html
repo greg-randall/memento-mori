@@ -21,6 +21,7 @@
         window.storiesData = {{ stories_data_json|safe }};
     </script>
     <script src="js/modal.js"></script>
+    <script src="js/stories.js"></script>
   </head>
   <body>
     <header>
@@ -89,25 +90,21 @@
       </div>
     </main>
 
-    <!-- Modal for story details -->
-    <div class="post-modal" id="postModal">
-        <div class="close-modal" id="closeModal">✕</div>
-        <div class="modal-nav modal-prev" id="modalPrev">❮</div>
-        <div class="modal-nav modal-next" id="modalNext">❯</div>
-        <div class="post-modal-content">
-            <div class="post-media" id="postMedia"></div>
-            <div class="post-info">
-                <div class="post-header">
-                    <div class="post-user" id="postUserPic">
-                        <img src="{{ profile_picture }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                    </div>
-                    <div class="post-username" id="postUsername">{{ username }}</div>
-                </div>
-                <div class="post-caption" id="postCaption"></div>
-                <div class="post-stats" id="postStats"></div>
-                <div class="post-date" id="postDate"></div>
-            </div>
+    <!-- Story Viewer -->
+    <div class="story-viewer" id="storyViewer">
+      <div class="story-close" id="storyClose">✕</div>
+      <div class="story-nav story-prev" id="storyPrev">❮</div>
+      <div class="story-nav story-next" id="storyNext">❯</div>
+      <div class="story-progress-container">
+        <div class="story-progress" id="storyProgress"></div>
+      </div>
+      <div class="story-content">
+        <div class="story-media-container" id="storyMedia"></div>
+        <div class="story-info-overlay">
+          <div class="story-caption" id="storyCaption"></div>
+          <div class="story-date" id="storyDate"></div>
         </div>
+      </div>
     </div>
     
     <footer>

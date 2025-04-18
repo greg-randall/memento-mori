@@ -107,6 +107,18 @@ class InstagramSiteGenerator:
             for js_file in js_dir.glob("*.js"):
                 shutil.copy2(js_file, self.output_dir / "js" / js_file.name)
                 print(f"Copied JS: {js_file.name}")
+            
+            # Ensure stories.js exists, create it if not
+            stories_js = js_dir / "stories.js"
+            if not stories_js.exists():
+                # Create a minimal stories.js file if it doesn't exist
+                with open(stories_js, "w") as f:
+                    f.write("// Stories viewer functionality\n")
+                print(f"Created placeholder: stories.js")
+            
+            # Copy stories.js to output
+            shutil.copy2(stories_js, self.output_dir / "js" / "stories.js")
+            print(f"Copied JS: stories.js")
 
     def _generate_html(self):
         """Generate HTML using templates."""
