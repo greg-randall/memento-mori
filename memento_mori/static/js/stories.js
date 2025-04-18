@@ -224,9 +224,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Update navigation buttons visibility
-        storyPrev.style.display = index > 0 ? 'flex' : 'none';
-        storyNext.style.display = index < storyItems.length - 1 ? 'flex' : 'none';
+        // Update navigation buttons visibility - always show both buttons for circular navigation
+        storyPrev.style.display = 'flex';
+        storyNext.style.display = 'flex';
     }
     
     // Navigate to previous/next story
@@ -241,6 +241,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Calculate the new index with circular navigation
         let newIndex = currentStoryIndex + direction;
+        
+        // Implement circular navigation
+        if (newIndex < 0) {
+            newIndex = storyItems.length - 1; // Wrap to the last story
+            console.log('Wrapping to the last story');
+        } else if (newIndex >= storyItems.length) {
+            newIndex = 0; // Wrap to the first story
+            console.log('Wrapping to the first story');
+        }
         
         // Implement circular navigation
         if (newIndex < 0) {
