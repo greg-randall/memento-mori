@@ -88,21 +88,28 @@ document.addEventListener('DOMContentLoaded', function() {
                        mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm');
         
         if (isVideo) {
+            console.log('Loading video story:', mediaUrl);
             const video = document.createElement('video');
             video.src = mediaUrl;
             video.controls = true;
-            video.autoplay = true;
+            video.autoplay = !isPaused; // Only autoplay if not paused
             video.muted = false;
             video.addEventListener('play', function() {
+                console.log('Video started playing');
                 // Don't auto-progress for videos, let them play through
                 clearAutoProgressTimer();
             });
+            video.addEventListener('pause', function() {
+                console.log('Video paused');
+            });
             video.addEventListener('ended', function() {
+                console.log('Video ended, navigating to next story');
                 // Go to next story when video ends
                 navigateStory(1);
             });
             storyMedia.appendChild(video);
         } else {
+            console.log('Loading image story:', mediaUrl);
             const img = document.createElement('img');
             
             // Check if there's a WebP version available for non-WebP images
@@ -138,7 +145,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start auto-progress timer with visual indicator
     function startAutoProgressTimer() {
         // Don't start timer if paused
-        if (isPaused) return;
+        if (isPaused) {
+            console.log('Not starting timer because story is paused');
+            return;
+        }
+        
+        console.log('Starting auto-progress timer with delay:', autoProgressDelay, 'ms');
         
         // Animate progress bar
         storyProgress.style.transition = `width ${autoProgressDelay}ms linear`;
@@ -146,12 +158,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set timer for auto-progression
         autoProgressTimer = setTimeout(() => {
+            console.log('Auto-progress timer completed, navigating to next story');
             navigateStory(1);
         }, autoProgressDelay);
     }
     
     // Clear auto-progress timer
     function clearAutoProgressTimer() {
+        console.log('Clearing auto-progress timer');
         clearTimeout(autoProgressTimer);
         storyProgress.style.transition = 'none';
         storyProgress.style.width = '0%';
@@ -207,9 +221,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Toggle pause function
     function togglePause() {
+        console.log('Toggle pause called, current state:', isPaused);
         isPaused = !isPaused;
         
         if (isPaused) {
+            console.log('Pausing story playback');
             // Show play icon when paused
             pauseIcon.style.display = 'none';
             playIcon.style.display = 'block';
@@ -218,17 +234,31 @@ document.addEventListener('DOMContentLoaded', function() {
             clearAutoProgressTimer();
             storyProgress.style.transition = 'none';
         } else {
+            console.log('Resuming story playback');
             // Show pause icon when playing
             pauseIcon.style.display = 'block';
             playIcon.style.display = 'none';
             
-            // Restart the timer for images
-            const mediaUrl = storyItems[currentStoryIndex].querySelector('img').src;
-            const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.mov') || 
-                           mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm');
+            // Check if current story is a video
+            const currentStoryItem = storyItems[currentStoryIndex];
+            console.log('Current story index:', currentStoryIndex);
+            console.log('Current story item:', currentStoryItem);
+            
+            // Get the media element in the story viewer
+            const videoElement = storyMedia.querySelector('video');
+            const isVideo = videoElement !== null;
+            
+            console.log('Is video:', isVideo);
             
             if (!isVideo) {
+                console.log('Starting auto progress timer for image');
                 startAutoProgressTimer();
+            } else {
+                console.log('Not starting timer for video');
+                // For videos, we might want to play the video if it was paused
+                if (videoElement && videoElement.paused) {
+                    videoElement.play();
+                }
             }
         }
     }
