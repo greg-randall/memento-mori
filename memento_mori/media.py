@@ -108,11 +108,20 @@ class InstagramMediaProcessor:
         # Update profile picture path if it was fixed
         if profile_picture in path_mapping:
             profile_picture = path_mapping[profile_picture]
-        
-        # Process profile picture and get shortened path
-        shortened_profile = self.shorten_filename(profile_picture)
-        self.copy_file_to_distribution(profile_picture)
-        self.generate_thumbnail(profile_picture, shortened_profile)
+
+        # Process profile picture and get shortened path (only if profile picture exists)
+        shortened_profile = ""
+        if profile_picture and profile_picture.strip():
+            # Check if the profile picture file actually exists
+            profile_path = Path(self.extraction_dir) / profile_picture
+            if profile_path.exists() and profile_path.is_file():
+                shortened_profile = self.shorten_filename(profile_picture)
+                self.copy_file_to_distribution(profile_picture)
+                self.generate_thumbnail(profile_picture, shortened_profile)
+            else:
+                print(f"Warning: Profile picture not found or is not a file: {profile_picture}")
+        else:
+            print("Warning: No profile picture specified in data")
 
         # Collect all media files to process
         all_media = []
