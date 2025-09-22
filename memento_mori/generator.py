@@ -137,7 +137,6 @@ class InstagramSiteGenerator:
         
         # Check if we have a WebP version of the profile picture
         if profile_picture:
-            import re
             webp_path = re.sub(r"\.(jpg|jpeg|png|gif)$", ".webp", profile_picture, flags=re.I)
             if os.path.exists(os.path.join(self.output_dir, webp_path)):
                 profile_picture = webp_path
@@ -294,7 +293,6 @@ class InstagramSiteGenerator:
         
         # Check if we have a WebP version of the profile picture
         if profile_picture:
-            import re
             webp_path = re.sub(r"\.(jpg|jpeg|png|gif)$", ".webp", profile_picture, flags=re.I)
             if os.path.exists(os.path.join(self.output_dir, webp_path)):
                 profile_picture = webp_path
