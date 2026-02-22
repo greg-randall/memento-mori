@@ -74,28 +74,24 @@ class InstagramDataLoader:
             with open(profile_path, "r", encoding="utf-8") as f:
                 self.profile_data = json.load(f)
 
+            string_map = self.profile_data["profile_user"][0]["string_map_data"]
+
             profile_info = {
-                "username": self.profile_data["profile_user"][0]["string_map_data"][
-                    "Username"
-                ]["value"],
-                "profile_picture": self.profile_data["profile_user"][0][
-                    "media_map_data"
-                ]["Profile Photo"]["uri"],
-                "bio": "",  # Initialize bio as empty string
-                "website": ""  # Initialize website as empty string
+                "username": string_map["Username"]["value"],
+                "profile_picture": self.profile_data["profile_user"][0]["media_map_data"]["Profile photo"]["uri"],
+                "bio": "",
+                "website": "",
+                "name": "",
             }
-            
-            # Extract bio if available
-            if "Bio" in self.profile_data["profile_user"][0]["string_map_data"]:
-                profile_info["bio"] = self.profile_data["profile_user"][0]["string_map_data"]["Bio"]["value"]
-                if self.verbose:
-                    print(f"Found bio: {profile_info['bio'][:30]}...")
-            
-            # Extract website if available
-            if "Website" in self.profile_data["profile_user"][0]["string_map_data"]:
-                profile_info["website"] = self.profile_data["profile_user"][0]["string_map_data"]["Website"]["value"]
-                if self.verbose:
-                    print(f"Found website: {profile_info['website']}")
+
+            if "Name" in string_map:
+                profile_info["name"] = string_map["Name"]["value"]
+
+            if "Bio" in string_map:
+                profile_info["bio"] = string_map["Bio"]["value"]
+
+            if "Website" in string_map:
+                profile_info["website"] = string_map["Website"]["value"]
 
             return profile_info
         except Exception as e:
@@ -118,11 +114,15 @@ class InstagramDataLoader:
             with open(location_path, "r", encoding="utf-8") as f:
                 self.location_data = json.load(f)
 
-            location_info = {
-                "location": self.location_data["inferred_data_primary_location"][0][
-                    "string_map_data"
-                ]["City Name"]["value"]
-            }
+            string_map = self.location_data["inferred_data_primary_location"][0]["string_map_data"]
+
+            location_value = "Unknown"
+            for key in ["Town/city name", "City Name", "Name"]:
+                if key in string_map:
+                    location_value = string_map[key]["value"]
+                    break
+
+            return {"location": location_value}
 
             return location_info
         except Exception as e:

@@ -13,20 +13,21 @@ class InstagramFileMapper:
     FILE_PATTERNS = {
         "posts": ["**/content/posts*.json", "**/media/posts*.json"],
         "insights": ["**/past_instagram_insights/posts.json"],
-        "profile": [
-            "**/personal_information/personal_information.json",
-            "**/account_information/personal_information.json",  # Alternative location
-            "**/personal_information.json",  # Directly in root
-            # Search in any subdirectory
-            "**/*/personal_information.json"
-        ],
-        "location": [
-            "**/information_about_you/profile_based_in.json",
-            "**/profile_based_in.json",  # Directly in root
-            "**/*/profile_based_in.json",  # In any subdirectory
-            "**/account_information/profile_based_in.json",  # Alternative location
-            "**/personal_information/profile_based_in.json"  # Another possible location
-        ],
+		"profile": [
+			"**/personal_information/personal_information/personal_information.json",  # Double-nested (newer exports)
+			"**/personal_information/personal_information.json",
+			"**/account_information/personal_information.json",
+			"**/personal_information.json",
+			"**/*/personal_information.json"
+		],
+		"location": [
+			"**/personal_information/information_about_you/profile_based_in.json",  # Newer exports
+			"**/information_about_you/profile_based_in.json",
+			"**/profile_based_in.json",
+			"**/*/profile_based_in.json",
+			"**/account_information/profile_based_in.json",
+			"**/personal_information/profile_based_in.json"
+		],
         "followers": [
             "**/connections/followers_and_following/followers*.json",
             "**/followers_and_following/followers*.json",
