@@ -526,8 +526,9 @@ class InstagramMediaProcessor:
                         new_path = file_path.with_stem(new_stem).with_suffix(correct_ext)
                         counter += 1
                     
-                    # Rename the file
-                    file_path.rename(new_path)
+                    # copy the file with the new extension
+                    # leave the old file in place so if we run the program again, path_mapping is created properly
+                    shutil.copy(file_path, new_path)
                     
                     stats["fixed"] += 1
                     stats["fixed_files"].append({
