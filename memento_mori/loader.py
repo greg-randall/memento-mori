@@ -75,14 +75,20 @@ class InstagramDataLoader:
                 self.profile_data = json.load(f)
 
             string_map = self.profile_data["profile_user"][0]["string_map_data"]
+            media_map = self.profile_data["profile_user"][0]["media_map_data"]
 
             profile_info = {
                 "username": string_map["Username"]["value"],
-                "profile_picture": self.profile_data["profile_user"][0]["media_map_data"]["Profile photo"]["uri"],
+                "profile_picture": "",
                 "bio": "",
                 "website": "",
                 "name": "",
             }
+
+            if "Profile photo" in media_map:
+                profile_info["profile_picture"] = media_map["Profile photo"]["uri"]
+            elif "Profile Photo" in media_map:
+                profile_info["profile_picture"] = media_map["Profile Photo"]["uri"]
 
             if "Name" in string_map:
                 profile_info["name"] = string_map["Name"]["value"]
