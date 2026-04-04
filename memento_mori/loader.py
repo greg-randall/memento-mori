@@ -85,10 +85,10 @@ class InstagramDataLoader:
                 "name": "",
             }
 
-            if "Profile photo" in media_map:
-                profile_info["profile_picture"] = media_map["Profile photo"]["uri"]
-            elif "Profile Photo" in media_map:
-                profile_info["profile_picture"] = media_map["Profile Photo"]["uri"]
+            for key, value in media_map.items():
+                if key.lower() == "profile photo":
+                    profile_info["profile_picture"] = value.get("uri", "")
+                    break
 
             if "Name" in string_map:
                 profile_info["name"] = string_map["Name"]["value"]
