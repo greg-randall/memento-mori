@@ -18,7 +18,7 @@ class InstagramArchiveExtractor:
     - Clean up temporary files after processing
     """
 
-    REQUIRED_FILES = ["profile", "location", "posts"]
+    REQUIRED_FILES = ["profile", "posts"]
 
     def __init__(self, input_path=None, output_path=None, cleanup=True):
         """
@@ -30,6 +30,7 @@ class InstagramArchiveExtractor:
             cleanup (bool): Whether to clean up temporary files after extraction
         """
         self.input_path = input_path
+        self.input_paths = [input_path] if input_path else []
         self.output_path = output_path
         self.cleanup = cleanup
         self.temp_dir = None
@@ -65,13 +66,16 @@ class InstagramArchiveExtractor:
             print("   No Instagram archives found.")
             return None
 
-        # If multiple archives found, take the most recent one
+        # Sort by modification time (most recent first)
+        potential_archives.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+
         if len(potential_archives) > 1:
-            # Sort by modification time (most recent first)
-            potential_archives.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            print(f"   Found {len(potential_archives)} archives. Using most recent.")
+            print(f"   Found {len(potential_archives)} archives. All will be merged.")
+            for archive in potential_archives:
+                print(f"   - {os.path.basename(archive)}")
 
         self.input_path = potential_archives[0]
+        self.input_paths = potential_archives
         print(f"   Selected: {os.path.basename(self.input_path)}")
         return self.input_path
 
@@ -130,10 +134,10 @@ class InstagramArchiveExtractor:
                 self.extraction_dir = self.output_path
                 os.makedirs(self.extraction_dir, exist_ok=True)
 
-            # Extract the ZIP file
-            print(f"Extracting {self.input_path} to {self.extraction_dir}...")
-            with zipfile.ZipFile(self.input_path, "r") as zip_ref:
-                zip_ref.extractall(self.extraction_dir)
+            # Extract all detected ZIP files, merging their contents
+            for zip_path in self.input_paths:
+                print(f"Extracting {zip_path} to {self.extraction_dir}...")
+                self._extract_and_merge(zip_path, self.extraction_dir)
         else:
             # Input is already a directory
             self.extraction_dir = self.input_path
@@ -205,6 +209,40 @@ class InstagramArchiveExtractor:
                     self.file_map[f"{file_type}_all"] = [
                         str(match) for match in all_matches
                     ]
+
+    def _extract_and_merge(self, zip_path, target_dir):
+        """
+        Extract a ZIP file into target_dir, handling the case where the ZIP
+        contains a single top-level directory by merging its contents directly.
+        """
+        staging_dir = tempfile.mkdtemp(prefix="instagram_staging_")
+        try:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(staging_dir)
+
+            # If the ZIP had a single top-level directory, use its contents directly
+            contents = os.listdir(staging_dir)
+            if len(contents) == 1 and os.path.isdir(os.path.join(staging_dir, contents[0])):
+                source = os.path.join(staging_dir, contents[0])
+            else:
+                source = staging_dir
+
+            self._merge_dirs(source, target_dir)
+        finally:
+            shutil.rmtree(staging_dir, ignore_errors=True)
+
+    def _merge_dirs(self, src, dst):
+        """Recursively merge src directory into dst directory."""
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            d = os.path.join(dst, item)
+            if os.path.isdir(s):
+                if os.path.exists(d):
+                    self._merge_dirs(s, d)
+                else:
+                    shutil.copytree(s, d)
+            else:
+                shutil.copy2(s, d)
 
     def get_file_path(self, file_type):
         """
