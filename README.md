@@ -58,6 +58,9 @@ docker compose run --rm memento-mori --output /output/my-site --quality 90
 
 # Add Google Analytics tracking
 docker compose run --rm memento-mori --gtag-id G-DX1ZWTC9NZ
+
+# Serve the output folder locally to preview in your browser
+python3 -m http.server -d output
 ```
 
 By default, Docker will:
@@ -75,6 +78,9 @@ pip install ftfy==6.3.1 Jinja2==3.0.3 MarkupSafe==2.1.5 opencv_python==4.10.0.84
 
 # Run the CLI
 python -m memento_mori.cli
+
+# Serve the output folder locally to preview in your browser
+python3 -m http.server -d output
 ```
 
 ### CLI Arguments
