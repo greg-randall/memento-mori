@@ -22,3 +22,8 @@ __pycache__/
 
 # System Files
 .DS_Store
+
+# Comments test secrets
+comments-test/.env
+comments-test/instagram_cookies.json
+comments-test/runs/
