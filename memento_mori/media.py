@@ -47,9 +47,37 @@ class InstagramMediaProcessor:
         self.webp_count = 0
         self.total_size_original = 0
         self.total_size_webp = 0
-        
+
         # Initialize filename mapping
         self.filename_map = {}
+
+        # Build a basename -> [Path, ...] index for fallback file lookup
+        self.file_index = self._build_file_index()
+
+    def _build_file_index(self):
+        """
+        Walk extraction_dir and build a basename -> [Path, ...] index.
+        Warns about any filename collisions found.
+        """
+        index = {}
+        for path in self.extraction_dir.rglob("*"):
+            if not path.is_file():
+                continue
+            name = path.name
+            if name not in index:
+                index[name] = []
+            index[name].append(path)
+
+        collisions = {name: paths for name, paths in index.items() if len(paths) > 1}
+        if collisions:
+            print(f"\n⚠️  WARNING: {len(collisions)} duplicate filename(s) found across archive")
+            print("   Fallback lookup will use the first match:")
+            for name, paths in collisions.items():
+                print(f"   {name} ({len(paths)} copies):")
+                for p in paths:
+                    print(f"      {p.relative_to(self.extraction_dir)}")
+
+        return index
 
     def shorten_filename(self, original_path):
         """
@@ -326,11 +354,19 @@ class InstagramMediaProcessor:
         # Create directory structure if it doesn't exist
         destination.parent.mkdir(parents=True, exist_ok=True)
 
-        # Check if source file exists
+        # Check if source file exists; fall back to basename index if not found
         if not source.exists():
-            if not quiet:
-                print(f"Warning: Source file does not exist: {source}")
-            return False
+            basename = Path(file_path).name
+            candidates = self.file_index.get(basename, [])
+            if candidates:
+                if len(candidates) > 1 and not quiet:
+                    print(f"Warning: '{basename}' matched {len(candidates)} files in archive"
+                          f" — using {candidates[0].relative_to(self.extraction_dir)}")
+                source = candidates[0]
+            else:
+                if not quiet:
+                    print(f"Warning: Source file not found anywhere in archive: {file_path}")
+                return False
 
         # Check if it's an image or video
         is_image = bool(re.search(r"\.(jpg|jpeg|png|gif)$", str(file_path), re.I))

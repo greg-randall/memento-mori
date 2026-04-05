@@ -66,8 +66,8 @@ class InstagramArchiveExtractor:
             print("   No Instagram archives found.")
             return None
 
-        # Sort by modification time (most recent first)
-        potential_archives.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        # Sort by modification time (oldest first, so newest archive is extracted last and wins on conflicts)
+        potential_archives.sort(key=lambda x: os.path.getmtime(x))
 
         if len(potential_archives) > 1:
             print(f"   Found {len(potential_archives)} archives. All will be merged.")
