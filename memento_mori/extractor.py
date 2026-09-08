@@ -158,7 +158,8 @@ class InstagramArchiveExtractor:
             return self.extraction_dir
         else:
             raise ValueError(
-                "Extracted content does not appear to be a valid Instagram archive."
+                getattr(self, "_validation_error", None)
+                or "Extracted content does not appear to be a valid Instagram archive."
             )
 
     def validate_structure(self):
@@ -166,6 +167,7 @@ class InstagramArchiveExtractor:
         Validate the structure of the extracted content.
         """
         if not self.extraction_dir or not os.path.exists(self.extraction_dir):
+            self._validation_error = "Extraction directory does not exist."
             return False
 
         # Create file mapper
@@ -178,12 +180,67 @@ class InstagramArchiveExtractor:
         )
 
         if not valid:
-            print(f"Missing required files: {', '.join(missing_files)}")
+            self._validation_error = self._diagnose_missing_files(missing_files)
+            print(self._validation_error)
             return False
 
         # For backward compatibility, update self.file_map
         self.file_map = self.file_mapper.file_map
         return True
+
+    def _diagnose_missing_files(self, missing_files):
+        """
+        Build a diagnostic message for the validation-failure path. Distinguishes
+        an HTML-format Instagram export (unsupported — this tool only reads
+        JSON) from the generic "Instagram renamed export folders again" case,
+        and in the generic case dumps the top-level extracted structure so
+        issue reports come with useful info without needing back-and-forth.
+        """
+        base = f"Missing required files: {', '.join(missing_files)}"
+
+        html_count = 0
+        json_count = 0
+        for path in Path(self.extraction_dir).rglob("*"):
+            if path.is_file():
+                suffix = path.suffix.lower()
+                if suffix == ".html":
+                    html_count += 1
+                elif suffix == ".json":
+                    json_count += 1
+
+        if html_count > 0 and json_count == 0:
+            return (
+                f"{base}\n\n"
+                "This looks like an Instagram HTML-format export, not the JSON-format "
+                "export memento-mori requires.\n"
+                "When requesting your data from Instagram, choose 'Format: JSON' (not HTML) "
+                "under Accounts Center > Your information and permissions > "
+                "Export your information.\n"
+                f"Found {html_count} .html file(s) and 0 .json files in the extracted archive."
+            )
+
+        try:
+            top_level = sorted(os.listdir(self.extraction_dir))
+        except OSError as e:
+            top_level = []
+            base += f"\n(could not list extraction dir: {e})"
+
+        lines = [
+            base,
+            "",
+            "This usually means Instagram has renamed export folders/files again. "
+            "Top-level contents of the extracted archive:",
+        ]
+        for name in top_level:
+            marker = "/" if os.path.isdir(os.path.join(self.extraction_dir, name)) else ""
+            lines.append(f"  - {name}{marker}")
+        lines.append("")
+        lines.append(f"({json_count} .json file(s), {html_count} .html file(s) total in archive)")
+        lines.append(
+            "Please open an issue at https://github.com/greg-randall/memento-mori/issues "
+            "including this output."
+        )
+        return "\n".join(lines)
 
     def _map_important_files(self):
         """

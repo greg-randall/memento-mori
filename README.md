@@ -7,7 +7,7 @@
 If you find a bug that you're able to fix please create a pull request, otherwise create an issue!
 
 ## Quick Start
-Get your Instagram data export zip, throw it in with this code, and run this command:
+Get your Instagram data export as a JSON-format zip, throw it in with this code, and run this command:
 ```bash
 docker compose run --rm memento-mori
 #Then open output/index.html in your browser
