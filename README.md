@@ -56,7 +56,7 @@ docker compose build
 docker compose run --rm memento-mori
 
 # Run with specific arguments
-docker compose run --rm memento-mori --output /output/my-site --quality 90
+docker compose run --rm memento-mori --output /app/output/my-site --quality 90
 
 # Add Google Analytics tracking
 docker compose run --rm memento-mori --gtag-id G-DX1ZWTC9NZ

@@ -3,7 +3,7 @@ services:
     build: .
     volumes:
       - ./:/app/workspace
-      - ./output:/output
+      - ./output:/app/output
     environment:
       - PYTHONUNBUFFERED=1
-    command: --search-dir /app/workspace --output /output
+    command: --search-dir /app/workspace --output /app/output
