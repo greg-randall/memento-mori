@@ -140,6 +140,24 @@ After the tool finishes processing your Instagram data:
 3. Click on "stories" in your profile stats to view your Stories archive
 4. You can also upload the entire output directory to a web hosting service to share it online
 
+## Troubleshooting & Reporting Issues
+If you encounter an error:
+
+1. Re-run with the `-v` (verbose) flag to get detailed diagnostic output:
+   ```bash
+   docker compose run --rm memento-mori -v
+   # or
+   python -m memento_mori.cli -v
+   ```
+
+2. When opening a GitHub issue, please include:
+   - The full error message and traceback from the `-v` output
+   - Your Instagram export format (JSON or HTML)
+   - Whether you're using Docker or running Python directly
+   - Any other relevant details (e.g., if you have multiple export ZIPs)
+
+The verbose output helps us understand what's happening with your specific archive and will speed up debugging.
+
 ## PHP Version (Alternative)
 For those who prefer the deprecated PHP implementation, there are a few notes in the deprecated_php_utility folder, but basically extract your data into the folder with the php file, and run
 ```bash
