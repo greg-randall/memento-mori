@@ -15,9 +15,49 @@ def fix_double_encoded_utf8(text):
     """
     if not isinstance(text, str):
         return text
-    
+
     # Use ftfy to fix the text encoding issues
     return fix_text(text)
+
+
+def parse_timestamp(timestamp_value):
+    """
+    Parse a timestamp that may be an int (Unix seconds) or string (ISO format, etc).
+    Returns (int_timestamp, formatted_string) or (None, "") on parse failure.
+    """
+    if not timestamp_value:
+        return None, ""
+
+    # If it's already an int, use it directly
+    if isinstance(timestamp_value, int):
+        try:
+            return timestamp_value, datetime.utcfromtimestamp(
+                timestamp_value
+            ).strftime("%B %d, %Y at %I:%M %p")
+        except (ValueError, OSError):
+            return None, ""
+
+    # If it's a string that looks like a Unix timestamp (all digits)
+    if isinstance(timestamp_value, str) and timestamp_value.isdigit():
+        try:
+            ts = int(timestamp_value)
+            return ts, datetime.utcfromtimestamp(ts).strftime(
+                "%B %d, %Y at %I:%M %p"
+            )
+        except (ValueError, OSError):
+            return None, ""
+
+    # If it's a string, try ISO format parsing (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS, etc)
+    if isinstance(timestamp_value, str):
+        try:
+            dt = datetime.fromisoformat(timestamp_value.replace("Z", "+00:00"))
+            # Convert to Unix timestamp
+            ts = int(dt.timestamp())
+            return ts, dt.strftime("%B %d, %Y at %I:%M %p")
+        except (ValueError, AttributeError, TypeError):
+            pass
+
+    return None, ""
 
 
 class InstagramDataLoader:
@@ -120,17 +160,32 @@ class InstagramDataLoader:
             with open(location_path, "r", encoding="utf-8") as f:
                 self.location_data = json.load(f)
 
-            string_map = self.location_data["inferred_data_primary_location"][0]["string_map_data"]
-
             location_value = "Unknown"
-            for key in ["Town/city name", "City Name", "Name"]:
-                if key in string_map:
-                    location_value = string_map[key]["value"]
-                    break
+
+            # Try old format first (pre-2026): inferred_data_primary_location
+            try:
+                string_map = self.location_data["inferred_data_primary_location"][0]["string_map_data"]
+                for key in ["Town/city name", "City Name", "Name"]:
+                    if key in string_map:
+                        location_value = string_map[key]["value"]
+                        break
+            except (KeyError, TypeError, IndexError):
+                # Try new format (2026+): label_values array
+                try:
+                    label_values = self.location_data.get("label_values", [])
+                    for label_item in label_values:
+                        if label_item.get("label") == "Location":
+                            # Extract location from dict array
+                            for dict_item in label_item.get("dict", []):
+                                if dict_item.get("label") in ["City", "City Name", "Town/city name"]:
+                                    location_value = dict_item.get("value", "Unknown")
+                                    break
+                            if location_value != "Unknown":
+                                break
+                except (KeyError, TypeError):
+                    pass
 
             return {"location": location_value}
-
-            return location_info
         except Exception as e:
             print(f"Error loading location data: {str(e)}")
             return {"location": "Unknown"}
@@ -296,7 +351,9 @@ class InstagramDataLoader:
             self.insights_data = {}
 
         if self.verbose:
-            print(f"Combining {len(self.posts_data) if self.posts_data else 0} posts with {len(self.insights_data)} insights entries")
+            post_count = len(self.posts_data) if self.posts_data else 0
+            insight_count = len(self.insights_data)
+            print(f"Combining {post_count} posts with {insight_count} insights entries")
 
         combined = []
         
@@ -390,15 +447,21 @@ class InstagramDataLoader:
 
             # Extract post-level data
             if "post_data" in item:
+                raw_timestamp = None
                 if "creation_timestamp" in item["post_data"]:
-                    post_entry["t"] = item["post_data"]["creation_timestamp"]
+                    raw_timestamp = item["post_data"]["creation_timestamp"]
                 elif "media" in item["post_data"] and len(item["post_data"]["media"]) > 0 and "creation_timestamp" in item["post_data"]["media"][0]:
                     # Fallback to first media item timestamp if post timestamp not available
-                    post_entry["t"] = item["post_data"]["media"][0]["creation_timestamp"]
+                    raw_timestamp = item["post_data"]["media"][0]["creation_timestamp"]
 
-                post_entry["d"] = datetime.utcfromtimestamp(
-                    post_entry["t"]
-                ).strftime("%B %d, %Y at %I:%M %p")
+                # Parse timestamp (handles both int and string formats)
+                ts_int, ts_formatted = parse_timestamp(raw_timestamp)
+                if ts_int is not None:
+                    post_entry["t"] = ts_int
+                    post_entry["d"] = ts_formatted
+                else:
+                    post_entry["t"] = None
+                    post_entry["d"] = ""
 
                 # Get title from post data
                 post_title = ""
@@ -497,12 +560,22 @@ class InstagramDataLoader:
 
         if self.verbose:
             print(f"Extracted {len(simplified_data)} posts with valid timestamps")
-            
-        # Sort by timestamp (newest first)
-        sorted_data = dict(sorted(simplified_data.items(), key=lambda x: x[0], reverse=True))
-        
+
+        # Sort by timestamp (newest first) - handle both int and string keys
+        try:
+            sorted_data = dict(sorted(simplified_data.items(), key=lambda x: int(x[0]) if isinstance(x[0], (int, str)) else 0, reverse=True))
+        except (ValueError, TypeError):
+            # If sorting fails, just use unsorted data
+            sorted_data = simplified_data
+
         if self.verbose and sorted_data:
-            print(f"Posts date range: {datetime.utcfromtimestamp(int(list(sorted_data.keys())[-1])).strftime('%Y-%m-%d')} to {datetime.utcfromtimestamp(int(list(sorted_data.keys())[0])).strftime('%Y-%m-%d')}")
+            try:
+                keys = list(sorted_data.keys())
+                oldest_ts = int(keys[-1])
+                newest_ts = int(keys[0])
+                print(f"Posts date range: {datetime.utcfromtimestamp(oldest_ts).strftime('%Y-%m-%d')} to {datetime.utcfromtimestamp(newest_ts).strftime('%Y-%m-%d')}")
+            except (ValueError, OSError, IndexError):
+                pass
             
         return sorted_data
 
@@ -809,28 +882,32 @@ class InstagramDataLoader:
 
         # Get date range for display
         if posts_data and isinstance(posts_data, dict) and len(posts_data) > 0:
-            keys = list(posts_data.keys())
-            first_key = keys[0]  # Newest post
-            last_key = keys[-1]  # Oldest post
+            try:
+                keys = list(posts_data.keys())
+                first_key = keys[0]  # Newest post
+                last_key = keys[-1]  # Oldest post
 
-            # Format timestamps
-            newest_post_date = datetime.utcfromtimestamp(int(first_key)).strftime(
-                "%B %Y"
-            )
-            oldest_post_date = datetime.utcfromtimestamp(int(last_key)).strftime(
-                "%B %Y"
-            )
+                # Convert keys to int if they're strings, then to datetime
+                newest_ts = int(first_key) if isinstance(first_key, (int, str)) else 0
+                oldest_ts = int(last_key) if isinstance(last_key, (int, str)) else 0
 
-            date_range = {
-                "newest": newest_post_date,
-                "oldest": oldest_post_date,
-                "range": f"{oldest_post_date} - {newest_post_date}",
-            }
+                # Format timestamps
+                newest_post_date = datetime.utcfromtimestamp(newest_ts).strftime("%B %Y") if newest_ts else "Unknown"
+                oldest_post_date = datetime.utcfromtimestamp(oldest_ts).strftime("%B %Y") if oldest_ts else "Unknown"
+
+                date_range = {
+                    "newest": newest_post_date,
+                    "oldest": oldest_post_date,
+                    "range": f"{oldest_post_date} - {newest_post_date}",
+                }
+            except (ValueError, OSError, IndexError, TypeError):
+                date_range = {"newest": "Unknown", "oldest": "Unknown", "range": "Unknown"}
         else:
             date_range = {"newest": "Unknown", "oldest": "Unknown", "range": "Unknown"}
-            # If no posts data, create an empty dict to avoid NoneType errors
-            if not isinstance(posts_data, dict):
-                posts_data = {}
+
+        # If no posts data, create an empty dict to avoid NoneType errors
+        if not isinstance(posts_data, dict):
+            posts_data = {}
 
         return {
             "profile": profile_info,
