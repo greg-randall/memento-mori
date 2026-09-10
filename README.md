@@ -4,7 +4,7 @@
 
 **Memento Mori** is a tool that converts your Instagram data export into a beautiful, standalone viewer that resembles the Instagram interface. The name "Memento Mori" (Latin for "remember that you will die") reflects the ephemeral nature of our digital content. You can see an example at https://gregr.org/instagram/.
 
-If you find a bug that you're able to fix please create a pull request, otherwise create an issue!
+If you find a bug that you're able to fix please create a pull request, otherwise [create an issue](https://github.com/greg-randall/memento-mori/issues) (see [Troubleshooting & Reporting Issues](#troubleshooting--reporting-issues) for what info to include)!
 
 ## Quick Start
 Get your Instagram data export as a JSON-format zip, throw it in with this code, and run this command:
