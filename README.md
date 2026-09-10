@@ -152,7 +152,7 @@ If you encounter an error:
 
 2. When opening a GitHub issue, please include:
    - The full error message and traceback from the `-v` output
-   - Your Instagram export format (JSON or HTML)
+   - Your Instagram export format (must be **JSON**, not HTML — this tool does not support HTML exports)
    - Whether you're using Docker or running Python directly
    - Any other relevant details (e.g., if you have multiple export ZIPs)
 
